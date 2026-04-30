@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Francisco Burgos — Portafolio SSO</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:   #0D1B2A;
+    --blue:   #1B5299;
+    --cyan:   #2EB8D4;
+    --gold:   #E8A838;
+    --light:  #EEF4FC;
+    --muted:  #8A9BB0;
+    --white:  #FFFFFF;
+    --card:   #162233;
+    --border: rgba(46,184,212,0.18);
+  }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(46,184,212,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(46,184,212,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .hero {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 6rem 8vw 4rem;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    top: -20%;
+    right: -10%;
+    width: 60vw;
+    height: 60vw;
+    background: radial-gradient(circle, rgba(27,82,153,0.35) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-glow2 {
+    position: absolute;
+    bottom: -10%;
+    left: 30%;
+    width: 30vw;
+    height: 30vw;
+    background: radial-gradient(circle, rgba(46,184,212,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(46,184,212,0.12);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 2rem;
+    animation: fadeUp 0.6s ease both;
+  }
+  .badge::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--cyan); animation: pulse 2s infinite; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:none} }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: clamp(3rem, 7vw, 6rem);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+  .hero h1 span { color: var(--cyan); }
+
+  .hero-sub {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color: var(--muted);
+    margin-top: 1.5rem;
+    max-width: 580px;
+    line-height: 1.7;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .meta-item svg { color: var(--cyan); flex-shrink: 0; }
+
+  .hero-cta {
+    display: flex;
+    gap: 1rem;
+    margin-top: 3rem;
+    flex-wrap: wrap;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+  .btn-primary {
+    background: var(--cyan);
+    color: var(--navy);
+    font-family: 'Syne', sans-serif;
+    font-weight: 630;
+    font-size: 0.9rem;
+    padding: 14px 32px;
+    border-radius: 6px;
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover { background: var(--white); transform: translateY(-2px); }
+  .btn-outline {
+    border: 1px solid var(--border);
+    color: var(--cyan);
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 14px 32px;
+    border-radius: 6px;
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+  }
+  .btn-outline:hover { background: rgba(46,184,212,0.1); transform: translateY(-2px); }
+
+  .stats-strip {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .stat {
+    background: var(--navy);
+    padding: 2rem 2.5rem;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 2.4rem;
+    color: var(--cyan);
+    line-height: 1;
+  }
+  .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 6px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  .section {
+    position: relative;
+    z-index: 1;
+    padding: 6rem 8vw;
+  }
+  .section-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 1rem;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    line-height: 1.15;
+    margin-bottom: 0.75rem;
+  }
+  .section-desc { color: var(--muted); font-size: 1rem; max-width: 560px; line-height: 1.7; margin-bottom: 3.5rem; }
+
+  .dashboards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .dash-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+    animation: fadeIn 0.5s ease both;
+  }
+  .dash-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--cyan);
+    box-shadow: 0 20px 60px rgba(13,27,42,0.6), 0 0 0 1px rgba(46,184,212,0.2);
+  }
+
+  .dash-thumb {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .dash-thumb::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 60%, var(--card));
+  }
+
+  .dash-body { padding: 1.5rem; flex: 1; display: flex; flex-direction: column; }
+  .dash-tag {
+    display: inline-block;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    background: rgba(46,184,212,0.1);
+    border-radius: 4px;
+    padding: 3px 10px;
+    margin-bottom: 0.75rem;
+  }
+  .dash-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 1.15rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+  .dash-desc { color: var(--muted); font-size: 0.85rem; line-height: 1.6; flex: 1; }
+  .dash-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .dash-arrow {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cyan);
+    font-size: 1rem;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .dash-card:hover .dash-arrow { background: var(--cyan); color: var(--navy); border-color: var(--cyan); }
+
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  .skill-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+  }
+  .skill-name { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.75rem; }
+  .skill-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+  .skill-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--blue), var(--cyan)); transition: width 1.2s ease; }
+  .skill-meta { display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.72rem; color: var(--muted); }
+
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 3rem 8vw;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-name { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 1.1rem; }
+  .footer-links { display: flex; gap: 1.5rem; }
+  .footer-links a { color: var(--muted); text-decoration: none; font-size: 0.85rem; transition: color 0.2s; }
+  .footer-links a:hover { color: var(--cyan); }
+
+  @media(max-width:768px) {
+    .stats-strip { grid-template-columns: repeat(2,1fr); }
+    .hero { padding: 5rem 6vw 3rem; }
+    .section { padding: 4rem 6vw; }
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+
+  <div class="badge">Portafolio Profesional · SSO</div>
+
+  <h1>Francisco<br><span>Burgos</span><br>Muñoz</h1>
+
+  <p class="hero-sub">
+    Experto en Prevención de Riesgos con +17 años gestionando Sistemas de Seguridad y Salud Ocupacional en transporte, minería y construcción. Registro SEREMI N° AM/P-2966.
+  </p>
+
+  <div class="hero-meta">
+    <div class="meta-item">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Recoleta, Santiago, Chile
+    </div>
+    <div class="meta-item">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013 9.7a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.91 14a16 16 0 006.06 6.06l.27-.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+      +56 9 7704 3485
+    </div>
+    <div class="meta-item">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      f_burgos@hotmail.es
+    </div>
+    <div class="meta-item">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+      github.com/FranciscoBurgos-SSO
+    </div>
+  </div>
+
+  <div class="hero-cta">
+    <a href="#dashboards" class="btn-primary">Ver Dashboards →</a>
+    <a href="CV_Francisco_Burgos_ATS.pdf" class="btn-outline" download>Descargar CV</a>
+  </div>
+</section>
+
+<div class="stats-strip">
+  <div class="stat">
+    <div class="stat-num">17+</div>
+    <div class="stat-label">Años de experiencia</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">40+</div>
+    <div class="stat-label">Contratistas gestionados</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">9</div>
+    <div class="stat-label">Empresas lideradas</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">3</div>
+    <div class="stat-label">Certificaciones ISO/OHSAS</div>
+  </div>
+</div>
+
+<section class="section" id="dashboards">
+  <p class="section-label">Portafolio de Análisis</p>
+  <h2 class="section-title">Dashboards de<br>Seguridad & Salud Ocupacional</h2>
+  <p class="section-desc">Visualizaciones interactivas construidas con datos reales del sector transporte, minería y construcción. Cada dashboard refleja KPIs críticos del área SSO.</p>
+
+  <div class="dashboards-grid">
+
+    <a href="dashboard-accidentabilidad.html" class="dash-card" style="animation-delay:0.05s">
+      <div class="dash-thumb" style="background: linear-gradient(135deg,#0d2137 0%,#1a3a5c 50%,#0d2137 100%);">
+        <svg width="64" height="64" fill="none" stroke="rgba(46,184,212,0.6)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <div class="dash-body">
+        <span class="dash-tag">Tasa de Accidentabilidad</span>
+        <h3 class="dash-title">Índices de Frecuencia & Gravedad</h3>
+        <p class="dash-desc">Evolución mensual de tasas de frecuencia, gravedad y accidentabilidad. Comparativa por año y tendencias de mejora continua.</p>
+        <div class="dash-footer">
+          <span>KPIs · Tendencias · Alertas</span>
+          <span class="dash-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="dashboard-iper.html" class="dash-card" style="animation-delay:0.1s">
+      <div class="dash-thumb" style="background: linear-gradient(135deg,#0d1e37 0%,#1a2e50 50%,#0d1e37 100%);">
+        <svg width="64" height="64" fill="none" stroke="rgba(232,168,56,0.6)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="dash-body">
+        <span class="dash-tag" style="color:#E8A838;background:rgba(232,168,56,0.1)">Gestión de Riesgos</span>
+        <h3 class="dash-title">Matriz IPER — Peligros & Riesgos</h3>
+        <p class="dash-desc">Clasificación de peligros por nivel de riesgo (crítico, alto, medio, bajo). Distribución por área de trabajo y tipo de riesgo.</p>
+        <div class="dash-footer">
+          <span>IPER · Matriz · Controles</span>
+          <span class="dash-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="dashboard-capacitaciones.html" class="dash-card" style="animation-delay:0.15s">
+      <div class="dash-thumb" style="background: linear-gradient(135deg,#0d2030 0%,#0f3045 50%,#0d2030 100%);">
+        <svg width="64" height="64" fill="none" stroke="rgba(46,184,212,0.6)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      </div>
+      <div class="dash-body">
+        <span class="dash-tag">Programa de Capacitación</span>
+        <h3 class="dash-title">Cobertura & Cumplimiento ODI</h3>
+        <p class="dash-desc">Porcentaje de cumplimiento del programa anual de capacitaciones, cobertura por área y cumplimiento de Obligación de Informar (ODI).</p>
+        <div class="dash-footer">
+          <span>ODI · Cobertura · Cumplimiento</span>
+          <span class="dash-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="dashboard-inspecciones.html" class="dash-card" style="animation-delay:0.2s">
+      <div class="dash-thumb" style="background: linear-gradient(135deg,#111d2a 0%,#1a3040 50%,#111d2a 100%);">
+        <svg width="64" height="64" fill="none" stroke="rgba(80,220,140,0.6)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      </div>
+      <div class="dash-body">
+        <span class="dash-tag" style="color:#50DC8C;background:rgba(80,220,140,0.1)">Inspecciones & Auditorías</span>
+        <h3 class="dash-title">Plan de Inspecciones SSO</h3>
+        <p class="dash-desc">Seguimiento de inspecciones planificadas vs realizadas, hallazgos por categoría, acciones correctivas y cierre de no conformidades.</p>
+        <div class="dash-footer">
+          <span>Hallazgos · NC · Cierre</span>
+          <span class="dash-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="dashboard-salud-ocupacional.html" class="dash-card" style="animation-delay:0.25s">
+      <div class="dash-thumb" style="background: linear-gradient(135deg,#0d1a2e 0%,#182840 50%,#0d1a2e 100%);">
+        <svg width="64" height="64" fill="none" stroke="rgba(200,120,220,0.6)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83"/></svg>
+      </div>
+      <div class="dash-body">
+        <span class="dash-tag" style="color:#C878DC;background:rgba(200,120,220,0.1)">Salud Ocupacional</span>
+        <h3 class="dash-title">Exámenes Ocupacionales & TMERT</h3>
+        <p class="dash-desc">Control de exámenes preocupacionales y ocupacionales, resultados de protocolos TMERT/PREXOR y ausentismo por enfermedad profesional.</p>
+        <div class="dash-footer">
+          <span>TMERT · PREXOR · Ausentismo</span>
+          <span class="dash-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <p class="section-label">Competencias Técnicas</p>
+  <h2 class="section-title" style="margin-bottom:2.5rem">Herramientas & Conocimientos</h2>
+  <div class="skills-grid">
+    <div class="skill-card">
+      <div class="skill-name">Sistemas de Gestión SSO (ISO 45001 / OHSAS 18001)</div>
+      <div class="skill-bar"><div class="skill-fill" style="width:95%"></div></div>
+      <div class="skill-meta"><span>Experto</span><span>95%</span></div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">Identificación de Peligros y Evaluación de Riesgos (IPER)</div>
+      <div class="skill-bar"><div class="skill-fill" style="width:95%"></div></div>
+      <div class="skill-meta"><span>Experto</span><span>95%</span></div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">Auditoría Líder ISO 9001 / ISO 14001 / OHSAS</div>
+      <div class="skill-bar"><div class="skill-fill" style="width:90%"></div></div>
+      <div class="skill-meta"><span>Avanzado</span><span>90%</span></div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">Power BI — Dashboards de KPIs SSO</div>
+      <div class="skill-bar"><div class="skill-fill" style="width:70%"></div></div>
+      <div class="skill-meta"><span>Intermedio</span><span>70%</span></div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">Protocolos TMERT, PREXOR, MCC, Ley Karin, DS 44</div>
+      <div class="skill-bar"><div class="skill-fill" style="width:90%"></div></div>
+      <div class="skill-meta"><span>Avanzado</span><span>90%</span></div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-name">Python — Automatización de Reportes SSO</div>
+      <div class="skill-bar"><div class="skill-fill" style="width:35%"></div></div>
+      <div class="skill-meta"><span>Básico</span><span>35%</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-name">Francisco Burgos Muñoz · SSO Portfolio</div>
+  <div class="footer-links">
+    <a href="mailto:f_burgos@hotmail.es">Email</a>
+    <a href="https://github.com/FranciscoBurgos-SSO" target="_blank">GitHub</a>
+    <a href="CV_Francisco_Burgos_ATS.pdf" download>Descargar CV</a>
+  </div>
+</footer>
+
+</body>
+</html>

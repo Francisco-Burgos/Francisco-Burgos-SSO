@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Capacitaciones & ODI</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{--navy:#0D1B2A;--cyan:#2EB8D4;--gold:#E8A838;--red:#E84455;--green:#3DBA7C;--card:#162233;--border:rgba(46,184,212,0.15);--muted:#8A9BB0;--white:#fff}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--navy);color:var(--white);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(46,184,212,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(46,184,212,0.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+  .topbar{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:1.2rem 2.5rem;border-bottom:1px solid var(--border);background:rgba(13,27,42,0.8);backdrop-filter:blur(10px)}
+  .topbar-left{display:flex;align-items:center;gap:1rem}
+  .back-btn{color:var(--muted);text-decoration:none;font-size:0.82rem;transition:color 0.2s}
+  .back-btn:hover{color:var(--cyan)}
+  .topbar-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem}
+  .topbar-sub{font-size:0.75rem;color:var(--muted)}
+  .badge{background:rgba(46,184,212,0.1);border:1px solid var(--border);border-radius:100px;padding:4px 14px;font-size:0.72rem;color:var(--cyan)}
+  main{position:relative;z-index:1;padding:2rem 2.5rem;max-width:1400px;margin:0 auto}
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.4rem 1.6rem;position:relative;overflow:hidden}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--cyan)}
+  .kpi-label{font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem}
+  .kpi-val{font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;line-height:1;color:var(--cyan)}
+  .kpi-sub{font-size:0.72rem;color:var(--muted);margin-top:4px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.5rem}
+  .chart-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;margin-bottom:0.3rem}
+  .chart-sub{font-size:0.75rem;color:var(--muted);margin-bottom:1.2rem}
+
+  /* Progress bars for courses */
+  .course-list{display:flex;flex-direction:column;gap:1rem}
+  .course-item{}
+  .course-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+  .course-name{font-size:0.85rem}
+  .course-pct{font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem}
+  .course-bar{height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden}
+  .course-fill{height:100%;border-radius:3px;transition:width 1.2s ease}
+
+  table{width:100%;border-collapse:collapse}
+  th{font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:0 0.75rem 0.75rem;text-align:left;border-bottom:1px solid var(--border)}
+  td{padding:0.55rem 0.75rem;font-size:0.8rem;border-bottom:1px solid rgba(255,255,255,0.04)}
+  tr:last-child td{border-bottom:none}
+  .pill{display:inline-block;padding:2px 10px;border-radius:100px;font-size:0.68rem;font-weight:500}
+  .pill.green{background:rgba(61,186,124,0.15);color:var(--green)}
+  .pill.gold{background:rgba(232,168,56,0.15);color:var(--gold)}
+  .pill.red{background:rgba(232,68,85,0.15);color:var(--red)}
+  .pill.cyan{background:rgba(46,184,212,0.15);color:var(--cyan)}
+  @media(max-width:900px){.kpi-row,.grid-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html" class="back-btn">← Portafolio</a>
+    <div>
+      <div class="topbar-title">Programa de Capacitación & ODI</div>
+      <div class="topbar-sub">Cobertura anual · Obligación de Informar · Cumplimiento Legal</div>
+    </div>
+  </div>
+  <div class="badge">Capacitación 2024</div>
+</div>
+
+<main>
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Cumplimiento Programa</div><div class="kpi-val">91%</div><div class="kpi-sub">Meta anual: 90%  ✓</div></div>
+    <div class="kpi"><div class="kpi-label">ODI Realizadas</div><div class="kpi-val">148</div><div class="kpi-sub">de 162 planificadas</div></div>
+    <div class="kpi"><div class="kpi-label">Trabajadores Capacitados</div><div class="kpi-val">312</div><div class="kpi-sub">100% de dotación</div></div>
+    <div class="kpi"><div class="kpi-label">Horas Capacitación</div><div class="kpi-val">1.840</div><div class="kpi-sub">HH totales 2024</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Cumplimiento Mensual del Programa</div>
+      <div class="chart-sub">Capacitaciones planificadas vs realizadas 2024</div>
+      <canvas id="barCap" height="130"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Cobertura por Área</div>
+      <div class="chart-sub">% de trabajadores capacitados por área</div>
+      <canvas id="radarCap" height="130"></canvas>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Avance por Módulo de Capacitación</div>
+      <div class="chart-sub">Programa anual de formación SSO — % completado</div>
+      <div class="course-list">
+        <div class="course-item">
+          <div class="course-header"><span class="course-name">Inducción SSO — Ingreso de personal</span><span class="course-pct" style="color:var(--green)">100%</span></div>
+          <div class="course-bar"><div class="course-fill" style="width:100%;background:var(--green)"></div></div>
+        </div>
+        <div class="course-item">
+          <div class="course-header"><span class="course-name">ODI — Obligación de Informar Riesgos</span><span class="course-pct" style="color:var(--green)">98%</span></div>
+          <div class="course-bar"><div class="course-fill" style="width:98%;background:var(--green)"></div></div>
+        </div>
+        <div class="course-item">
+          <div class="course-header"><span class="course-name">Manejo Defensivo y Conducción Segura</span><span class="course-pct" style="color:var(--green)">95%</span></div>
+          <div class="course-bar"><div class="course-fill" style="width:95%;background:var(--green)"></div></div>
+        </div>
+        <div class="course-item">
+          <div class="course-header"><span class="course-name">Uso y Mantención de EPP</span><span class="course-pct" style="color:var(--cyan)">92%</span></div>
+          <div class="course-bar"><div class="course-fill" style="width:92%;background:var(--cyan)"></div></div>
+        </div>
+        <div class="course-item">
+          <div class="course-header"><span class="course-name">Identificación y Control de Riesgos (IPER)</span><span class="course-pct" style="color:var(--cyan)">88%</span></div>
+          <div class="course-bar"><div class="course-fill" style="width:88%;background:var(--cyan)"></div></div>
+        </div>
+        <div class="course-item">
+          <div class="course-header"><span class="course-name">Primeros Auxilios y Plan de Emergencias</span><span class="course-pct" style="color:var(--gold)">80%</span></div>
+          <div class="course-bar"><div class="course-fill" style="width:80%;background:var(--gold)"></div></div>
+        </div>
+        <div class="course-item">
+          <div class="course-header"><span class="course-name">Protocolo Ley Karin — Ambientes de Trabajo</span><span class="course-pct" style="color:var(--gold)">78%</span></div>
+          <div class="course-bar"><div class="course-fill" style="width:78%;background:var(--gold)"></div></div>
+        </div>
+        <div class="course-item">
+          <div class="course-header"><span class="course-name">TMERT — Manejo Manual de Cargas</span><span class="course-pct" style="color:var(--red)">65%</span></div>
+          <div class="course-bar"><div class="course-fill" style="width:65%;background:var(--red)"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Registro de Capacitaciones — Últimas Actividades</div>
+      <div class="chart-sub">Noviembre – Diciembre 2024</div>
+      <table>
+        <thead><tr><th>Fecha</th><th>Módulo</th><th>Área</th><th>Participantes</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td>28/11/2024</td><td>ODI conductores</td><td>Conducción</td><td>24</td><td><span class="pill green">Completado</span></td></tr>
+          <tr><td>22/11/2024</td><td>Ley Karin</td><td>Todos</td><td>68</td><td><span class="pill green">Completado</span></td></tr>
+          <tr><td>14/11/2024</td><td>Manejo Defensivo</td><td>Conducción</td><td>30</td><td><span class="pill green">Completado</span></td></tr>
+          <tr><td>08/11/2024</td><td>Primeros Auxilios</td><td>Mantención</td><td>18</td><td><span class="pill green">Completado</span></td></tr>
+          <tr><td>29/11/2024</td><td>TMERT avanzado</td><td>Bodega</td><td>15</td><td><span class="pill cyan">Programado</span></td></tr>
+          <tr><td>05/12/2024</td><td>Plan Emergencias</td><td>Todos</td><td>70</td><td><span class="pill gold">Pendiente</span></td></tr>
+          <tr><td>12/12/2024</td><td>Cierre anual SSO</td><td>Todos</td><td>70</td><td><span class="pill gold">Pendiente</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script>
+const grid={color:'rgba(255,255,255,0.05)'};
+const tick={color:'#8A9BB0',font:{family:'DM Sans',size:11}};
+
+new Chart(document.getElementById('barCap'),{
+  type:'bar',
+  data:{
+    labels:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+    datasets:[
+      {label:'Planificadas',data:[14,12,15,13,14,15,14,13,16,14,15,13],backgroundColor:'rgba(255,255,255,0.08)',borderRadius:4},
+      {label:'Realizadas',data:[13,12,14,13,13,15,14,12,15,13,14,null],backgroundColor:'rgba(46,184,212,0.7)',borderRadius:4}
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{labels:{color:'#8A9BB0',font:{family:'DM Sans',size:11},boxWidth:14}}},scales:{x:{grid,ticks:tick},y:{grid,ticks:tick,beginAtZero:true}}}
+});
+
+new Chart(document.getElementById('radarCap'),{
+  type:'radar',
+  data:{
+    labels:['Conducción','Bodega','Mantención','Administrativo','Operaciones','Seguridad'],
+    datasets:[{
+      label:'Cobertura %',
+      data:[96,88,90,95,82,100],
+      backgroundColor:'rgba(46,184,212,0.15)',
+      borderColor:'rgba(46,184,212,0.8)',
+      borderWidth:2,
+      pointBackgroundColor:'#2EB8D4',
+      pointRadius:4
+    }]
+  },
+  options:{
+    responsive:true,
+    plugins:{legend:{labels:{color:'#8A9BB0',font:{family:'DM Sans',size:11}}}},
+    scales:{r:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8A9BB0',font:{size:10},backdropColor:'transparent'},pointLabels:{color:'#8A9BB0',font:{size:11}},min:60,max:100}}
+  }
+});
+</script>
+</body>
+</html>

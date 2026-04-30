@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Inspecciones & Auditorías SSO</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{--navy:#0D1B2A;--cyan:#2EB8D4;--gold:#E8A838;--red:#E84455;--green:#3DBA7C;--emerald:#50DC8C;--card:#162233;--border:rgba(80,220,140,0.15);--muted:#8A9BB0;--white:#fff}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--navy);color:var(--white);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(80,220,140,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(80,220,140,0.025) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+  .topbar{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:1.2rem 2.5rem;border-bottom:1px solid var(--border);background:rgba(13,27,42,0.8);backdrop-filter:blur(10px)}
+  .topbar-left{display:flex;align-items:center;gap:1rem}
+  .back-btn{color:var(--muted);text-decoration:none;font-size:0.82rem;transition:color 0.2s}
+  .back-btn:hover{color:var(--emerald)}
+  .topbar-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem}
+  .topbar-sub{font-size:0.75rem;color:var(--muted)}
+  .badge-green{background:rgba(80,220,140,0.1);border:1px solid rgba(80,220,140,0.25);border-radius:100px;padding:4px 14px;font-size:0.72rem;color:var(--emerald)}
+  main{position:relative;z-index:1;padding:2rem 2.5rem;max-width:1400px;margin:0 auto}
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.4rem 1.6rem;position:relative;overflow:hidden}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--emerald)}
+  .kpi-label{font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem}
+  .kpi-val{font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;line-height:1;color:var(--emerald)}
+  .kpi-sub{font-size:0.72rem;color:var(--muted);margin-top:4px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.5rem}
+  .chart-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;margin-bottom:0.3rem}
+  .chart-sub{font-size:0.75rem;color:var(--muted);margin-bottom:1.2rem}
+
+  /* Gauge */
+  .gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:0.5rem;padding:1rem 0}
+  .gauge-num{font-family:'Syne',sans-serif;font-weight:800;font-size:3rem;color:var(--emerald)}
+  .gauge-label{font-size:0.78rem;color:var(--muted)}
+
+  /* NC table */
+  table{width:100%;border-collapse:collapse}
+  th{font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:0 0.75rem 0.75rem;text-align:left;border-bottom:1px solid var(--border)}
+  td{padding:0.55rem 0.75rem;font-size:0.8rem;border-bottom:1px solid rgba(255,255,255,0.04)}
+  tr:last-child td{border-bottom:none}
+  .pill{display:inline-block;padding:2px 10px;border-radius:100px;font-size:0.68rem;font-weight:500}
+  .pill.green{background:rgba(61,186,124,0.15);color:var(--green)}
+  .pill.gold{background:rgba(232,168,56,0.15);color:var(--gold)}
+  .pill.red{background:rgba(232,68,85,0.15);color:var(--red)}
+  .pill.cyan{background:rgba(46,184,212,0.15);color:var(--cyan)}
+  .sev{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+  .sev.C{background:var(--red)}.sev.M{background:var(--gold)}.sev.L{background:var(--green)}
+  @media(max-width:900px){.kpi-row,.grid-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html" class="back-btn">← Portafolio</a>
+    <div>
+      <div class="topbar-title">Plan de Inspecciones & Auditorías SSO</div>
+      <div class="topbar-sub">Seguimiento de hallazgos · No Conformidades · Acciones Correctivas</div>
+    </div>
+  </div>
+  <div class="badge-green">Inspecciones 2024</div>
+</div>
+
+<main>
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Inspecciones Realizadas</div><div class="kpi-val">186</div><div class="kpi-sub">de 200 planificadas (93%)</div></div>
+    <div class="kpi"><div class="kpi-label">Hallazgos Detectados</div><div class="kpi-val">248</div><div class="kpi-sub">Promedio 1.3/inspección</div></div>
+    <div class="kpi"><div class="kpi-label">NC Cerradas</div><div class="kpi-val">91%</div><div class="kpi-sub">226 de 248 hallazgos</div></div>
+    <div class="kpi"><div class="kpi-label">NC Pendientes</div><div class="kpi-val" style="color:var(--gold)">22</div><div class="kpi-sub">En plazo de cierre</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Inspecciones Planificadas vs Realizadas</div>
+      <div class="chart-sub">Seguimiento mensual 2024</div>
+      <canvas id="barInsp" height="130"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Hallazgos por Categoría</div>
+      <div class="chart-sub">Clasificación de no conformidades detectadas</div>
+      <canvas id="doughnutHall" height="160"></canvas>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Estado de Acciones Correctivas</div>
+      <div class="chart-sub">Seguimiento cierre de hallazgos por mes</div>
+      <canvas id="lineNC" height="120"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Registro de No Conformidades Abiertas</div>
+      <div class="chart-sub">22 hallazgos pendientes de cierre</div>
+      <table>
+        <thead><tr><th>N°</th><th>Hallazgo</th><th>Área</th><th>Sev.</th><th>Plazo</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td>NC-041</td><td>EPP incompleto conductor</td><td>Conducción</td><td><span class="sev M"></span>Media</td><td>05/12</td><td><span class="pill gold">En proceso</span></td></tr>
+          <tr><td>NC-038</td><td>Extintor vencido bodega</td><td>Bodega</td><td><span class="sev C"></span>Crítica</td><td>01/12</td><td><span class="pill red">Atrasado</span></td></tr>
+          <tr><td>NC-035</td><td>Señalética faltante patio</td><td>Patio</td><td><span class="sev L"></span>Leve</td><td>10/12</td><td><span class="pill cyan">Iniciado</span></td></tr>
+          <tr><td>NC-032</td><td>Registro ODI sin firmar</td><td>Administrativo</td><td><span class="sev L"></span>Leve</td><td>08/12</td><td><span class="pill cyan">Iniciado</span></td></tr>
+          <tr><td>NC-029</td><td>Demarcación piso desgastada</td><td>Mantención</td><td><span class="sev M"></span>Media</td><td>15/12</td><td><span class="pill gold">En proceso</span></td></tr>
+          <tr><td>NC-025</td><td>Kit de primeros auxilios incompleto</td><td>Conducción</td><td><span class="sev M"></span>Media</td><td>12/12</td><td><span class="pill cyan">Iniciado</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script>
+const grid={color:'rgba(255,255,255,0.05)'};
+const tick={color:'#8A9BB0',font:{family:'DM Sans',size:11}};
+
+new Chart(document.getElementById('barInsp'),{
+  type:'bar',
+  data:{
+    labels:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov'],
+    datasets:[
+      {label:'Planificadas',data:[17,16,18,17,17,18,17,16,18,17,18],backgroundColor:'rgba(255,255,255,0.07)',borderRadius:4},
+      {label:'Realizadas',data:[16,16,17,16,17,18,16,15,17,16,17],backgroundColor:'rgba(80,220,140,0.65)',borderRadius:4}
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{labels:{color:'#8A9BB0',font:{family:'DM Sans',size:11},boxWidth:14}}},scales:{x:{grid,ticks:tick},y:{grid,ticks:tick,beginAtZero:true}}}
+});
+
+new Chart(document.getElementById('doughnutHall'),{
+  type:'doughnut',
+  data:{
+    labels:['EPP / Equipos','Orden y Aseo','Señalética','Procedimientos','Infraestructura','Documentación'],
+    datasets:[{data:[58,44,38,42,36,30],backgroundColor:['rgba(232,68,85,0.7)','rgba(232,168,56,0.7)','rgba(46,184,212,0.7)','rgba(80,220,140,0.7)','rgba(200,120,220,0.6)','rgba(100,180,255,0.6)'],borderWidth:0,hoverOffset:8}]
+  },
+  options:{responsive:true,cutout:'62%',plugins:{legend:{position:'right',labels:{color:'#8A9BB0',font:{family:'DM Sans',size:11},boxWidth:12,padding:10}}}}
+});
+
+new Chart(document.getElementById('lineNC'),{
+  type:'line',
+  data:{
+    labels:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov'],
+    datasets:[
+      {label:'Hallazgos nuevos',data:[28,22,25,20,23,22,21,20,24,22,21],borderColor:'rgba(232,68,85,0.7)',borderWidth:2,pointRadius:3,pointBackgroundColor:'rgba(232,68,85,0.7)',tension:0.4,fill:false},
+      {label:'NC cerradas',data:[24,21,24,20,22,22,20,19,23,21,20],borderColor:'rgba(80,220,140,0.8)',borderWidth:2,pointRadius:3,pointBackgroundColor:'rgba(80,220,140,0.8)',tension:0.4,fill:true,backgroundColor:'rgba(80,220,140,0.06)'}
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{labels:{color:'#8A9BB0',font:{family:'DM Sans',size:11},boxWidth:14}}},scales:{x:{grid,ticks:tick},y:{grid,ticks:tick,beginAtZero:true}}}
+});
+</script>
+</body>
+</html>

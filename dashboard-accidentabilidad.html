@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Índices de Accidentabilidad</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{--navy:#0D1B2A;--blue:#1B5299;--cyan:#2EB8D4;--gold:#E8A838;--red:#E84455;--green:#3DBA7C;--card:#162233;--border:rgba(46,184,212,0.15);--muted:#8A9BB0;--white:#fff}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--navy);color:var(--white);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(46,184,212,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(46,184,212,0.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+
+  .topbar{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:1.2rem 2.5rem;border-bottom:1px solid var(--border);background:rgba(13,27,42,0.8);backdrop-filter:blur(10px)}
+  .topbar-left{display:flex;align-items:center;gap:1rem}
+  .back-btn{display:flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:0.82rem;transition:color 0.2s}
+  .back-btn:hover{color:var(--cyan)}
+  .topbar-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--white)}
+  .topbar-sub{font-size:0.75rem;color:var(--muted)}
+  .badge-live{display:flex;align-items:center;gap:6px;background:rgba(61,186,124,0.12);border:1px solid rgba(61,186,124,0.25);border-radius:100px;padding:4px 12px;font-size:0.72rem;color:#3DBA7C}
+  .badge-live::before{content:'';width:6px;height:6px;border-radius:50%;background:#3DBA7C;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+  main{position:relative;z-index:1;padding:2rem 2.5rem;max-width:1400px;margin:0 auto}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.4rem 1.6rem;position:relative;overflow:hidden}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+  .kpi.danger::before{background:var(--red)}
+  .kpi.warn::before{background:var(--gold)}
+  .kpi.ok::before{background:var(--green)}
+  .kpi.info::before{background:var(--cyan)}
+  .kpi-label{font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem}
+  .kpi-val{font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;line-height:1}
+  .kpi-val.danger{color:var(--red)}
+  .kpi-val.warn{color:var(--gold)}
+  .kpi-val.ok{color:var(--green)}
+  .kpi-val.info{color:var(--cyan)}
+  .kpi-delta{display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;margin-top:0.4rem}
+  .kpi-delta.down{color:var(--green)}
+  .kpi-delta.up{color:var(--red)}
+
+  .charts-grid{display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.5rem}
+  .chart-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;margin-bottom:0.3rem}
+  .chart-sub{font-size:0.75rem;color:var(--muted);margin-bottom:1.2rem}
+  .chart-wrap{position:relative}
+
+  .bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+
+  .table-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.5rem}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:0 0.75rem 0.75rem;text-align:left;border-bottom:1px solid var(--border)}
+  td{padding:0.6rem 0.75rem;font-size:0.82rem;border-bottom:1px solid rgba(255,255,255,0.04)}
+  tr:last-child td{border-bottom:none}
+  .pill{display:inline-block;padding:2px 10px;border-radius:100px;font-size:0.68rem;font-weight:500}
+  .pill.red{background:rgba(232,68,85,0.15);color:var(--red)}
+  .pill.gold{background:rgba(232,168,56,0.15);color:var(--gold)}
+  .pill.green{background:rgba(61,186,124,0.15);color:var(--green)}
+
+  @media(max-width:900px){.kpi-row{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}.bottom-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html" class="back-btn">← Portafolio</a>
+    <div>
+      <div class="topbar-title">Índices de Accidentabilidad</div>
+      <div class="topbar-sub">Frecuencia · Gravedad · Tendencias — Sector Transporte</div>
+    </div>
+  </div>
+  <div class="badge-live">Datos 2024</div>
+</div>
+
+<main>
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi warn">
+      <div class="kpi-label">Tasa de Frecuencia</div>
+      <div class="kpi-val warn">4.8</div>
+      <div class="kpi-delta down">↓ 18% vs 2023</div>
+    </div>
+    <div class="kpi ok">
+      <div class="kpi-label">Tasa de Gravedad</div>
+      <div class="kpi-val ok">82</div>
+      <div class="kpi-delta down">↓ 24% vs 2023</div>
+    </div>
+    <div class="kpi info">
+      <div class="kpi-label">Días Perdidos YTD</div>
+      <div class="kpi-val info">164</div>
+      <div class="kpi-delta down">↓ 31 días vs 2023</div>
+    </div>
+    <div class="kpi ok">
+      <div class="kpi-label">Días sin Accidente</div>
+      <div class="kpi-val ok">127</div>
+      <div class="kpi-delta down">↑ Récord anual</div>
+    </div>
+  </div>
+
+  <!-- Charts top -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Evolución Mensual — Tasa de Frecuencia & Gravedad</div>
+      <div class="chart-sub">Índices calculados sobre 200.000 HHT · Año 2022–2024</div>
+      <div class="chart-wrap"><canvas id="lineChart" height="100"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Accidentes por Tipo</div>
+      <div class="chart-sub">Clasificación 2024</div>
+      <div class="chart-wrap"><canvas id="donutChart" height="180"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Bottom -->
+  <div class="bottom-grid">
+    <div class="chart-card">
+      <div class="chart-title">Accidentes por Área de Trabajo</div>
+      <div class="chart-sub">Comparativa 2023 vs 2024</div>
+      <div class="chart-wrap"><canvas id="barChart" height="120"></canvas></div>
+    </div>
+    <div class="table-card">
+      <div class="chart-title" style="margin-bottom:1rem">Últimos Incidentes Registrados</div>
+      <table>
+        <thead><tr><th>Fecha</th><th>Área</th><th>Tipo</th><th>Días</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td>12/11/2024</td><td>Conducción</td><td>Colisión leve</td><td>3</td><td><span class="pill green">Cerrado</span></td></tr>
+          <tr><td>04/10/2024</td><td>Bodega</td><td>Sobreesfuerzo</td><td>8</td><td><span class="pill green">Cerrado</span></td></tr>
+          <tr><td>21/09/2024</td><td>Mantención</td><td>Golpe herramienta</td><td>2</td><td><span class="pill green">Cerrado</span></td></tr>
+          <tr><td>15/08/2024</td><td>Conducción</td><td>Caída a nivel</td><td>5</td><td><span class="pill green">Cerrado</span></td></tr>
+          <tr><td>03/07/2024</td><td>Bodega</td><td>Atrapamiento</td><td>14</td><td><span class="pill gold">Seguimiento</span></td></tr>
+          <tr><td>20/06/2024</td><td>Adm.</td><td>Estrés laboral</td><td>0</td><td><span class="pill green">Cerrado</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script>
+const C = Chart;
+const grid = { color:'rgba(255,255,255,0.05)' };
+const tick = { color:'#8A9BB0', font:{ family:'DM Sans', size:11 } };
+
+// Line chart
+new C(document.getElementById('lineChart'), {
+  type:'line',
+  data:{
+    labels:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+    datasets:[
+      { label:'TF 2022', data:[9.2,8.7,8.1,9.5,7.8,8.3,9.0,8.6,7.9,8.2,7.5,7.1], borderColor:'rgba(139,155,176,0.5)', borderDash:[4,4], borderWidth:1.5, pointRadius:0, tension:0.4 },
+      { label:'TF 2023', data:[7.0,6.8,6.2,7.1,5.9,6.4,6.8,6.1,5.8,5.5,5.9,5.8], borderColor:'rgba(232,168,56,0.7)', borderWidth:2, pointRadius:3, pointBackgroundColor:'rgba(232,168,56,0.7)', tension:0.4, fill:false },
+      { label:'TF 2024', data:[5.5,5.1,4.8,5.2,4.3,4.7,4.5,4.2,4.9,4.6,4.4,4.8], borderColor:'#2EB8D4', borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#2EB8D4', tension:0.4, fill:true, backgroundColor:'rgba(46,184,212,0.08)' },
+    ]
+  },
+  options:{
+    responsive:true, plugins:{ legend:{ labels:{ color:'#8A9BB0', font:{family:'DM Sans',size:11}, boxWidth:14 } } },
+    scales:{ x:{ grid, ticks:tick }, y:{ grid, ticks:tick, title:{ display:true, text:'Índice TF', color:'#8A9BB0', font:{size:11} } } }
+  }
+});
+
+// Donut
+new C(document.getElementById('donutChart'), {
+  type:'doughnut',
+  data:{
+    labels:['Sobreesfuerzo','Golpes','Caídas','Colisiones','Otros'],
+    datasets:[{ data:[34,22,18,16,10], backgroundColor:['#2EB8D4','#E8A838','#3DBA7C','#E84455','rgba(255,255,255,0.15)'], borderWidth:0, hoverOffset:8 }]
+  },
+  options:{
+    responsive:true, cutout:'68%',
+    plugins:{ legend:{ position:'right', labels:{ color:'#8A9BB0', font:{family:'DM Sans',size:11}, boxWidth:12, padding:12 } } }
+  }
+});
+
+// Bar
+new C(document.getElementById('barChart'), {
+  type:'bar',
+  data:{
+    labels:['Conducción','Bodega','Mantención','Carga/Desc.','Administrativo'],
+    datasets:[
+      { label:'2023', data:[6,4,5,3,1], backgroundColor:'rgba(232,168,56,0.4)', borderRadius:4 },
+      { label:'2024', data:[4,3,3,2,1], backgroundColor:'rgba(46,184,212,0.7)', borderRadius:4 }
+    ]
+  },
+  options:{
+    responsive:true, plugins:{ legend:{ labels:{ color:'#8A9BB0', font:{family:'DM Sans',size:11}, boxWidth:14 } } },
+    scales:{ x:{ grid, ticks:tick }, y:{ grid, ticks:tick, beginAtZero:true } }
+  }
+});
+</script>
+</body>
+</html>

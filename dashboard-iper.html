@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Matriz IPER</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{--navy:#0D1B2A;--blue:#1B5299;--cyan:#2EB8D4;--gold:#E8A838;--red:#E84455;--green:#3DBA7C;--card:#162233;--border:rgba(46,184,212,0.15);--muted:#8A9BB0;--white:#fff}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--navy);color:var(--white);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(46,184,212,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(46,184,212,0.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+  .topbar{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:1.2rem 2.5rem;border-bottom:1px solid var(--border);background:rgba(13,27,42,0.8);backdrop-filter:blur(10px)}
+  .topbar-left{display:flex;align-items:center;gap:1rem}
+  .back-btn{display:flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:0.82rem;transition:color 0.2s}
+  .back-btn:hover{color:var(--gold)}
+  .topbar-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem}
+  .topbar-sub{font-size:0.75rem;color:var(--muted)}
+  .badge-gold{background:rgba(232,168,56,0.12);border:1px solid rgba(232,168,56,0.3);border-radius:100px;padding:4px 14px;font-size:0.72rem;color:var(--gold)}
+  main{position:relative;z-index:1;padding:2rem 2.5rem;max-width:1400px;margin:0 auto}
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.4rem 1.6rem;position:relative;overflow:hidden}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+  .kpi.cr::before{background:var(--red)} .kpi.hi::before{background:var(--gold)} .kpi.me::before{background:#F59E0B} .kpi.lo::before{background:var(--green)}
+  .kpi-label{font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem}
+  .kpi-val{font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;line-height:1}
+  .kpi-val.red{color:var(--red)}.kpi-val.gold{color:var(--gold)}.kpi-val.amber{color:#F59E0B}.kpi-val.green{color:var(--green)}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem}
+  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.5rem}
+  .chart-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;margin-bottom:0.3rem}
+  .chart-sub{font-size:0.75rem;color:var(--muted);margin-bottom:1.2rem}
+
+  /* Risk matrix visual */
+  .risk-matrix{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-top:0.5rem}
+  .rm-cell{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;cursor:default;transition:transform 0.15s}
+  .rm-cell:hover{transform:scale(1.08);z-index:2}
+  .rm-cell.cr{background:rgba(232,68,85,0.8);color:#fff}
+  .rm-cell.hi{background:rgba(232,168,56,0.75);color:#fff}
+  .rm-cell.me{background:rgba(245,158,11,0.65);color:#fff}
+  .rm-cell.lo{background:rgba(61,186,124,0.65);color:#fff}
+  .rm-cell.vl{background:rgba(61,186,124,0.3);color:#aaa}
+  .rm-label{font-size:0.62rem;color:var(--muted);text-align:center;margin-top:4px}
+  .matrix-axis{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem}
+  .axis-label{font-size:0.72rem;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase}
+
+  /* IPER table */
+  table{width:100%;border-collapse:collapse}
+  th{font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:0 0.75rem 0.75rem;text-align:left;border-bottom:1px solid var(--border)}
+  td{padding:0.55rem 0.75rem;font-size:0.8rem;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  .risk-badge{display:inline-block;padding:2px 10px;border-radius:100px;font-size:0.66rem;font-weight:600}
+  .risk-badge.CR{background:rgba(232,68,85,0.18);color:var(--red)}
+  .risk-badge.AL{background:rgba(232,168,56,0.18);color:var(--gold)}
+  .risk-badge.ME{background:rgba(245,158,11,0.18);color:#F59E0B}
+  .risk-badge.BA{background:rgba(61,186,124,0.18);color:var(--green)}
+
+  @media(max-width:900px){.kpi-row,.grid-2,.grid-3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html" class="back-btn">← Portafolio</a>
+    <div>
+      <div class="topbar-title">Matriz IPER — Peligros & Riesgos</div>
+      <div class="topbar-sub">Identificación de Peligros y Evaluación de Riesgos · DS 40 / Ley 16.744</div>
+    </div>
+  </div>
+  <div class="badge-gold">Gestión de Riesgos 2024</div>
+</div>
+
+<main>
+  <div class="kpi-row">
+    <div class="kpi cr"><div class="kpi-label">Riesgo Crítico</div><div class="kpi-val red">8</div><div style="font-size:0.72rem;color:var(--muted);margin-top:4px">Requiere control inmediato</div></div>
+    <div class="kpi hi"><div class="kpi-label">Riesgo Alto</div><div class="kpi-val gold">14</div><div style="font-size:0.72rem;color:var(--muted);margin-top:4px">Plan de acción 30 días</div></div>
+    <div class="kpi me"><div class="kpi-label">Riesgo Medio</div><div class="kpi-val amber">22</div><div style="font-size:0.72rem;color:var(--muted);margin-top:4px">Monitoreo trimestral</div></div>
+    <div class="kpi lo"><div class="kpi-label">Riesgo Bajo</div><div class="kpi-val green">31</div><div style="font-size:0.72rem;color:var(--muted);margin-top:4px">Control rutinario</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Distribución por Tipo de Riesgo</div>
+      <div class="chart-sub">75 peligros identificados · Actualización Nov 2024</div>
+      <canvas id="barRisk" height="130"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Matriz de Riesgo — Probabilidad × Consecuencia</div>
+      <div class="chart-sub">Valoración 5×5 según metodología IPER</div>
+      <div class="axis-label" style="font-size:0.68rem;color:var(--muted);margin-bottom:4px">↑ Consecuencia (Catastrófica → Insignificante)</div>
+      <div class="risk-matrix">
+        <!-- Row 5 (Catastrófica) -->
+        <div class="rm-cell cr" title="Casi seguro + Catastrófico">25</div><div class="rm-cell cr">20</div><div class="rm-cell hi">15</div><div class="rm-cell hi">10</div><div class="rm-cell me">5</div>
+        <!-- Row 4 -->
+        <div class="rm-cell cr">20</div><div class="rm-cell hi">16</div><div class="rm-cell hi">12</div><div class="rm-cell me">8</div><div class="rm-cell lo">4</div>
+        <!-- Row 3 -->
+        <div class="rm-cell hi">15</div><div class="rm-cell hi">12</div><div class="rm-cell me">9</div><div class="rm-cell me">6</div><div class="rm-cell lo">3</div>
+        <!-- Row 2 -->
+        <div class="rm-cell hi">10</div><div class="rm-cell me">8</div><div class="rm-cell me">6</div><div class="rm-cell lo">4</div><div class="rm-cell vl">2</div>
+        <!-- Row 1 (Insignificante) -->
+        <div class="rm-cell me">5</div><div class="rm-cell lo">4</div><div class="rm-cell lo">3</div><div class="rm-cell vl">2</div><div class="rm-cell vl">1</div>
+      </div>
+      <div class="rm-label">← Probabilidad (Rara → Casi Segura) →</div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:1.5rem">
+    <div class="chart-title">Peligros Críticos y Altos — Detalle IPER</div>
+    <div class="chart-sub">Principales peligros identificados con medidas de control asociadas</div>
+    <table>
+      <thead><tr><th>Área</th><th>Peligro Identificado</th><th>Tipo de Riesgo</th><th>Nivel</th><th>Control Existente</th><th>Medida Adicional</th></tr></thead>
+      <tbody>
+        <tr><td>Conducción</td><td>Fatiga al conducir en rutas largas</td><td>Colisión / Volcamiento</td><td><span class="risk-badge CR">CRÍTICO</span></td><td>Tacógrafo, límite de horas</td><td>Control biométrico fatiga</td></tr>
+        <tr><td>Mantención</td><td>Liberación descontrolada de energía</td><td>Atrapamiento / Amputación</td><td><span class="risk-badge CR">CRÍTICO</span></td><td>LOTO, procedimiento</td><td>Auditoría mensual LOTO</td></tr>
+        <tr><td>Conducción</td><td>Consumo de alcohol/drogas</td><td>Accidente de tránsito</td><td><span class="risk-badge CR">CRÍTICO</span></td><td>Test pre-turno</td><td>Protocolo sin excepciones</td></tr>
+        <tr><td>Bodega</td><td>Manipulación manual de cargas > 25 kg</td><td>Lumbalgia / TMERT</td><td><span class="risk-badge AL">ALTO</span></td><td>Capacitación MMC</td><td>Ayuda mecánica, TMERT</td></tr>
+        <tr><td>Conducción</td><td>Interacción peatón-vehículo en patio</td><td>Atropello</td><td><span class="risk-badge AL">ALTO</span></td><td>Demarcación, velocidad 10</td><td>Semáforo peatonal</td></tr>
+        <tr><td>Mantención</td><td>Trabajo en altura sobre 1.8 m</td><td>Caída de altura</td><td><span class="risk-badge AL">ALTO</span></td><td>Arnés, andamio</td><td>Permiso trabajo altura</td></tr>
+        <tr><td>Exposición</td><td>Ruido > 85 dB en zona de motores</td><td>Hipoacusia / PREXOR</td><td><span class="risk-badge ME">MEDIO</span></td><td>Protectores auditivos</td><td>Medición anual PREXOR</td></tr>
+        <tr><td>Conducción</td><td>Conducción nocturna en ruta</td><td>Colisión nocturna</td><td><span class="risk-badge ME">MEDIO</span></td><td>Luces, reflectantes</td><td>Capacitación conducción</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+const grid={color:'rgba(255,255,255,0.05)'};
+const tick={color:'#8A9BB0',font:{family:'DM Sans',size:11}};
+new Chart(document.getElementById('barRisk'),{
+  type:'bar',
+  data:{
+    labels:['Mecánico','Eléctrico','Ergonómico','Químico','Psicosocial','Locativo','Tránsito','Biológico'],
+    datasets:[{
+      label:'Peligros',
+      data:[18,10,16,6,9,8,12,4],
+      backgroundColor:['rgba(232,68,85,0.7)','rgba(232,168,56,0.7)','rgba(46,184,212,0.7)','rgba(245,158,11,0.7)','rgba(200,120,220,0.7)','rgba(80,200,140,0.7)','rgba(232,68,85,0.5)','rgba(100,180,255,0.6)'],
+      borderRadius:5,
+      borderWidth:0
+    }]
+  },
+  options:{
+    responsive:true,
+    plugins:{legend:{display:false}},
+    scales:{x:{grid,ticks:tick},y:{grid,ticks:tick,beginAtZero:true,title:{display:true,text:'N° de peligros',color:'#8A9BB0',font:{size:11}}}}
+  }
+});
+</script>
+</body>
+</html>
