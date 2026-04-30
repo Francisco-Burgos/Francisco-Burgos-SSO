@@ -29,16 +29,12 @@
   .chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.5rem}
   .chart-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;margin-bottom:0.3rem}
   .chart-sub{font-size:0.75rem;color:var(--muted);margin-bottom:1.2rem}
-
-  /* Progress bars for courses */
   .course-list{display:flex;flex-direction:column;gap:1rem}
-  .course-item{}
   .course-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
   .course-name{font-size:0.85rem}
   .course-pct{font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem}
   .course-bar{height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden}
   .course-fill{height:100%;border-radius:3px;transition:width 1.2s ease}
-
   table{width:100%;border-collapse:collapse}
   th{font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:0 0.75rem 0.75rem;text-align:left;border-bottom:1px solid var(--border)}
   td{padding:0.55rem 0.75rem;font-size:0.8rem;border-bottom:1px solid rgba(255,255,255,0.04)}
@@ -49,6 +45,17 @@
   .pill.red{background:rgba(232,68,85,0.15);color:var(--red)}
   .pill.cyan{background:rgba(46,184,212,0.15);color:var(--cyan)}
   @media(max-width:900px){.kpi-row,.grid-2{grid-template-columns:1fr}}
+  .filter-bar{display:flex;flex-wrap:wrap;align-items:center;gap:1rem;background:rgba(22,34,51,0.8);border:1px solid var(--border);border-radius:10px;padding:1rem 1.5rem;margin-bottom:1.5rem}
+  .filter-group{display:flex;align-items:center;gap:0.6rem}
+  .filter-label{font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  .filter-btns{display:flex;gap:4px;flex-wrap:wrap}
+  .fbtn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--muted);padding:4px 12px;border-radius:100px;font-size:0.72rem;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+  .fbtn:hover{border-color:var(--cyan);color:var(--cyan)}
+  .fbtn.active{background:rgba(46,184,212,0.15);border-color:var(--cyan);color:var(--cyan)}
+  .export-btn{margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(46,184,212,0.1);border:1px solid var(--border);color:var(--cyan);padding:6px 16px;border-radius:6px;font-size:0.75rem;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+  .export-btn:hover{background:rgba(46,184,212,0.2)}
+  .summary-toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0.8rem 1.2rem;font-size:0.78rem;color:var(--cyan);z-index:999;opacity:0;transform:translateY(12px);transition:all 0.3s;pointer-events:none}
+  .summary-toast.show{opacity:1;transform:none}
 </style>
 </head>
 <body>
@@ -64,11 +71,36 @@
 </div>
 
 <main>
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Período</span>
+      <div class="filter-btns" id="periodFilter">
+        <button class="fbtn active" data-period="all">Año completo</button>
+        <button class="fbtn" data-period="q1">Q1 (Ene-Mar)</button>
+        <button class="fbtn" data-period="q2">Q2 (Abr-Jun)</button>
+        <button class="fbtn" data-period="q3">Q3 (Jul-Sep)</button>
+        <button class="fbtn" data-period="q4">Q4 (Oct-Dic)</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Vista</span>
+      <div class="filter-btns" id="viewFilter">
+        <button class="fbtn active" data-view="abs">Absoluto</button>
+        <button class="fbtn" data-view="pct">Porcentaje</button>
+      </div>
+    </div>
+    <button class="export-btn" id="exportBtn">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar PNG
+    </button>
+  </div>
+  <div class="summary-toast" id="toast"></div>
+
   <div class="kpi-row">
-    <div class="kpi"><div class="kpi-label">Cumplimiento Programa</div><div class="kpi-val">91%</div><div class="kpi-sub">Meta anual: 90%  ✓</div></div>
-    <div class="kpi"><div class="kpi-label">ODI Realizadas</div><div class="kpi-val">148</div><div class="kpi-sub">de 162 planificadas</div></div>
-    <div class="kpi"><div class="kpi-label">Trabajadores Capacitados</div><div class="kpi-val">312</div><div class="kpi-sub">100% de dotación</div></div>
-    <div class="kpi"><div class="kpi-label">Horas Capacitación</div><div class="kpi-val">1.840</div><div class="kpi-sub">HH totales 2024</div></div>
+    <div class="kpi"><div class="kpi-label">Cumplimiento Programa</div><div class="kpi-val" id="kpiCumplimiento">91%</div><div class="kpi-sub">Meta anual: 90%  ✓</div></div>
+    <div class="kpi"><div class="kpi-label">ODI Realizadas</div><div class="kpi-val" id="kpiOdi">148</div><div class="kpi-sub" id="kpiOdiSub">de 162 planificadas</div></div>
+    <div class="kpi"><div class="kpi-label">Trabajadores Capacitados</div><div class="kpi-val" id="kpiTrabajadores">312</div><div class="kpi-sub">100% de dotación</div></div>
+    <div class="kpi"><div class="kpi-label">Horas Capacitación</div><div class="kpi-val" id="kpiHoras">1.840</div><div class="kpi-sub">HH totales 2024</div></div>
   </div>
 
   <div class="grid-2">
@@ -79,7 +111,7 @@
     </div>
     <div class="chart-card">
       <div class="chart-title">Cobertura por Área</div>
-      <div class="chart-sub">% de trabajadores capacitados por área</div>
+      <div class="chart-sub" id="radarSubtitle">% de trabajadores capacitados por área — Año completo</div>
       <canvas id="radarCap" height="130"></canvas>
     </div>
   </div>
@@ -144,40 +176,244 @@
 </main>
 
 <script>
-const grid={color:'rgba(255,255,255,0.05)'};
-const tick={color:'#8A9BB0',font:{family:'DM Sans',size:11}};
+const grid = { color: 'rgba(255,255,255,0.05)' };
+const tick = { color: '#8A9BB0', font: { family: 'DM Sans', size: 11 } };
 
-new Chart(document.getElementById('barCap'),{
-  type:'bar',
-  data:{
-    labels:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
-    datasets:[
-      {label:'Planificadas',data:[14,12,15,13,14,15,14,13,16,14,15,13],backgroundColor:'rgba(255,255,255,0.08)',borderRadius:4},
-      {label:'Realizadas',data:[13,12,14,13,13,15,14,12,15,13,14,null],backgroundColor:'rgba(46,184,212,0.7)',borderRadius:4}
-    ]
-  },
-  options:{responsive:true,plugins:{legend:{labels:{color:'#8A9BB0',font:{family:'DM Sans',size:11},boxWidth:14}}},scales:{x:{grid,ticks:tick},y:{grid,ticks:tick,beginAtZero:true}}}
+// Datos completos - Capacitaciones mensuales
+const CAP_DATA = {
+  all:  { plan:[14,12,15,13,14,15,14,13,16,14,15,13], real:[13,12,14,13,13,15,14,12,15,13,14,null] },
+  q1:   { plan:[14,12,15], real:[13,12,14] },
+  q2:   { plan:[13,14,15], real:[13,13,15] },
+  q3:   { plan:[14,13,16], real:[14,12,15] },
+  q4:   { plan:[14,15,13], real:[13,14,null] },
+};
+
+// NUEVO: Datos de cobertura por área según período (valores en porcentaje para cada área)
+// Áreas: Conducción, Bodega, Mantención, Administrativo, Operaciones, Seguridad
+const RADAR_DATA_BY_PERIOD = {
+  all:  { values: [96, 88, 90, 95, 82, 100],   kpi: { cumplimiento: 91, odi: 148, odiPlan: 162, trabajadores: 312, horas: 1840 } },
+  q1:   { values: [88, 75, 82, 90, 70, 92],    kpi: { cumplimiento: 85, odi: 35, odiPlan: 41, trabajadores: 278, horas: 420 } },
+  q2:   { values: [92, 82, 86, 92, 78, 95],    kpi: { cumplimiento: 88, odi: 42, odiPlan: 42, trabajadores: 295, horas: 460 } },
+  q3:   { values: [94, 85, 88, 94, 80, 98],    kpi: { cumplimiento: 90, odi: 39, odiPlan: 43, trabajadores: 305, horas: 490 } },
+  q4:   { values: [90, 78, 84, 91, 76, 94],    kpi: { cumplimiento: 87, odi: 32, odiPlan: 36, trabajadores: 289, horas: 470 } }
+};
+
+const MONTHS_MAP = {
+  all:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+  q1:['Ene','Feb','Mar'], q2:['Abr','May','Jun'], q3:['Jul','Ago','Sep'], q4:['Oct','Nov','Dic']
+};
+
+const AREA_LABELS = ['Conducción', 'Bodega', 'Mantención', 'Administrativo', 'Operaciones', 'Seguridad'];
+
+let barCap, radarCap;
+let activePeriod = 'all', activeView = 'abs';
+
+// Función para actualizar KPI según período
+function updateKPIs(period) {
+  const data = RADAR_DATA_BY_PERIOD[period];
+  if (!data) return;
+  
+  const kpis = data.kpi;
+  const cumplimientoEl = document.getElementById('kpiCumplimiento');
+  const odiEl = document.getElementById('kpiOdi');
+  const odiSubEl = document.getElementById('kpiOdiSub');
+  const trabajadoresEl = document.getElementById('kpiTrabajadores');
+  const horasEl = document.getElementById('kpiHoras');
+  
+  // Animación de números
+  const animateValue = (el, start, end, suffix = '', decimals = 0, duration = 800) => {
+    const startTime = performance.now();
+    const update = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const current = start + (end - start) * ease;
+      if (decimals > 0) {
+        el.textContent = current.toFixed(decimals) + suffix;
+      } else {
+        el.textContent = Math.floor(current) + suffix;
+      }
+      if (progress < 1) requestAnimationFrame(update);
+      else el.textContent = (decimals > 0 ? end.toFixed(decimals) : Math.floor(end)) + suffix;
+    };
+    requestAnimationFrame(update);
+  };
+  
+  animateValue(cumplimientoEl, parseInt(cumplimientoEl.textContent) || 0, kpis.cumplimiento, '%', 0, 600);
+  animateValue(odiEl, parseInt(odiEl.textContent) || 0, kpis.odi, '', 0, 600);
+  odiSubEl.textContent = `de ${kpis.odiPlan} planificadas`;
+  animateValue(trabajadoresEl, parseInt(trabajadoresEl.textContent) || 0, kpis.trabajadores, '', 0, 600);
+  
+  // Formateo especial para horas con miles
+  const horasEnd = kpis.horas;
+  const horasStart = parseInt(horasEl.textContent.replace(/\./g, '')) || 0;
+  const startTimeHoras = performance.now();
+  const animateHoras = (currentTime) => {
+    const elapsed = currentTime - startTimeHoras;
+    const progress = Math.min(elapsed / 600, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const current = horasStart + (horasEnd - horasStart) * ease;
+    const formatted = current >= 1000 ? Math.floor(current / 1000) + '.' + String(Math.floor(current % 1000)).padStart(3, '0') : Math.floor(current).toString();
+    horasEl.textContent = formatted;
+    if (progress < 1) requestAnimationFrame(animateHoras);
+    else horasEl.textContent = horasEnd >= 1000 ? Math.floor(horasEnd / 1000) + '.' + String(horasEnd % 1000).padStart(3, '0') : horasEnd.toString();
+  };
+  requestAnimationFrame(animateHoras);
+}
+
+// Gráfico de barras mensual - ACTUALIZADO para manejar vista porcentual correctamente
+function buildBarCap(period, viewMode) {
+  const d = CAP_DATA[period];
+  const labels = MONTHS_MAP[period];
+  let plan = [...d.plan];
+  let real = [...d.real];
+  
+  if (viewMode === 'pct') {
+    plan = plan.map(v => v !== null ? 100 : null);
+    real = real.map((v, i) => (v !== null && d.plan[i]) ? Math.round(v / d.plan[i] * 100) : null);
+  }
+  
+  if (barCap) {
+    barCap.data.labels = labels;
+    barCap.data.datasets[0].data = plan;
+    barCap.data.datasets[1].data = real;
+    barCap.options.scales.y.title = {
+      display: true, 
+      text: viewMode === 'pct' ? '% Cumplimiento' : 'Nº Capacitaciones', 
+      color: '#8A9BB0', 
+      font: { size: 11 }
+    };
+    barCap.update();
+  } else {
+    barCap = new Chart(document.getElementById('barCap'), {
+      type: 'bar',
+      data: { labels, datasets: [
+        { label: 'Planificadas', data: plan, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 4 },
+        { label: 'Realizadas', data: real, backgroundColor: 'rgba(46,184,212,0.7)', borderRadius: 4 }
+      ]},
+      options: {
+        responsive: true,
+        animation: { duration: 500 },
+        plugins: {
+          legend: { labels: { color: '#8A9BB0', font: { family: 'DM Sans', size: 11 }, boxWidth: 14 } },
+          tooltip: { backgroundColor: 'rgba(13,27,42,0.95)', borderColor: 'rgba(46,184,212,0.3)', borderWidth: 1 }
+        },
+        scales: { x: { grid, ticks: tick }, y: { grid, ticks: tick, beginAtZero: true } }
+      }
+    });
+  }
+}
+
+// NUEVO: Gráfico radar que responde al período y vista
+function buildRadarCap(period, viewMode) {
+  const periodData = RADAR_DATA_BY_PERIOD[period];
+  if (!periodData) return;
+  
+  // Los datos base son porcentajes de cobertura
+  let dataValues = [...periodData.values];
+  
+  // En vista 'abs' mostramos los porcentajes originales, en 'pct' también son porcentajes (cobertura)
+  // Para hacer más interesante la interacción: en vista 'abs' se ven los valores reales de cobertura
+  // En vista 'pct' se ven los mismos (ya son porcentajes) o podríamos mostrar otra métrica
+  
+  const subtitle = document.getElementById('radarSubtitle');
+  const periodNames = { all: 'Año completo', q1: 'Q1 (Ene-Mar)', q2: 'Q2 (Abr-Jun)', q3: 'Q3 (Jul-Sep)', q4: 'Q4 (Oct-Dic)' };
+  subtitle.textContent = `% de trabajadores capacitados por área — ${periodNames[period] || period}`;
+  
+  if (radarCap) {
+    radarCap.data.datasets[0].data = dataValues;
+    radarCap.update();
+  } else {
+    radarCap = new Chart(document.getElementById('radarCap'), {
+      type: 'radar',
+      data: {
+        labels: AREA_LABELS,
+        datasets: [{
+          label: 'Cobertura %',
+          data: dataValues,
+          backgroundColor: 'rgba(46,184,212,0.15)',
+          borderColor: 'rgba(46,184,212,0.8)',
+          borderWidth: 2,
+          pointBackgroundColor: '#2EB8D4',
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        animation: { duration: 500 },
+        plugins: {
+          legend: { labels: { color: '#8A9BB0', font: { family: 'DM Sans', size: 11 } } },
+          tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw}%` } }
+        },
+        scales: {
+          r: {
+            grid: { color: 'rgba(255,255,255,0.06)' },
+            ticks: { color: '#8A9BB0', font: { size: 10 }, backdropColor: 'transparent', callback: (v) => v + '%' },
+            pointLabels: { color: '#8A9BB0', font: { size: 11 } },
+            min: 60,
+            max: 100
+          }
+        }
+      }
+    });
+  }
+}
+
+// Actualización completa cuando cambia período o vista
+function fullUpdate() {
+  buildBarCap(activePeriod, activeView);
+  buildRadarCap(activePeriod, activeView);
+  updateKPIs(activePeriod);
+  showToast(activePeriod);
+}
+
+// Toast de notificación
+function showToast(period) {
+  const d = CAP_DATA[period];
+  if (!d) return;
+  const realized = d.real.filter(v => v !== null).reduce((a, b) => a + b, 0);
+  const planned = d.plan.filter(v => v !== null).reduce((a, b) => a + b, 0);
+  const pct = Math.round(realized / planned * 100);
+  const labels = { all: 'Año completo', q1: 'Q1', q2: 'Q2', q3: 'Q3', q4: 'Q4' };
+  const toast = document.getElementById('toast');
+  toast.textContent = `${labels[period] || period}: ${realized} de ${planned} capacitaciones (${pct}%)`;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Event Listeners
+document.getElementById('periodFilter').addEventListener('click', e => {
+  const btn = e.target.closest('.fbtn');
+  if (!btn) return;
+  document.querySelectorAll('#periodFilter .fbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activePeriod = btn.dataset.period;
+  fullUpdate();
 });
 
-new Chart(document.getElementById('radarCap'),{
-  type:'radar',
-  data:{
-    labels:['Conducción','Bodega','Mantención','Administrativo','Operaciones','Seguridad'],
-    datasets:[{
-      label:'Cobertura %',
-      data:[96,88,90,95,82,100],
-      backgroundColor:'rgba(46,184,212,0.15)',
-      borderColor:'rgba(46,184,212,0.8)',
-      borderWidth:2,
-      pointBackgroundColor:'#2EB8D4',
-      pointRadius:4
-    }]
-  },
-  options:{
-    responsive:true,
-    plugins:{legend:{labels:{color:'#8A9BB0',font:{family:'DM Sans',size:11}}}},
-    scales:{r:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#8A9BB0',font:{size:10},backdropColor:'transparent'},pointLabels:{color:'#8A9BB0',font:{size:11}},min:60,max:100}}
+document.getElementById('viewFilter').addEventListener('click', e => {
+  const btn = e.target.closest('.fbtn');
+  if (!btn) return;
+  document.querySelectorAll('#viewFilter .fbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeView = btn.dataset.view;
+  buildBarCap(activePeriod, activeView);
+  // El radar no cambia con vista porcentual porque ya muestra porcentajes
+  showToast(activePeriod);
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  if (barCap) {
+    const link = document.createElement('a');
+    link.download = 'capacitaciones-chart.png';
+    link.href = barCap.toBase64Image();
+    link.click();
   }
+});
+
+// Inicialización con animaciones
+window.addEventListener('load', () => {
+  fullUpdate();
 });
 </script>
 </body>

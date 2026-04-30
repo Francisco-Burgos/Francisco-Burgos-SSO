@@ -515,5 +515,242 @@
   </div>
 </footer>
 
+<script>
+/* ============================================================
+   1. ANIMATED COUNTERS — stats strip
+   ============================================================ */
+function animateCounter(el, target, suffix = '', duration = 1800) {
+  const start = performance.now();
+  const isFloat = target % 1 !== 0;
+  function update(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    // ease-out cubic
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = eased * target;
+    el.textContent = (isFloat ? current.toFixed(1) : Math.floor(current)) + suffix;
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+const statsObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const nums = entry.target.querySelectorAll('.stat-num[data-target]');
+      nums.forEach(el => {
+        const target = parseFloat(el.dataset.target);
+        const suffix = el.dataset.suffix || '';
+        animateCounter(el, target, suffix);
+      });
+      statsObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.4 });
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Tag stat-num elements with data attributes
+  const statNums = document.querySelectorAll('.stat-num');
+  const targets = [17, 40, 9, 3];
+  const suffixes = ['+', '+', '', ''];
+  statNums.forEach((el, i) => {
+    el.dataset.target = targets[i];
+    el.dataset.suffix = suffixes[i];
+    el.textContent = '0' + suffixes[i];
+  });
+  const strip = document.querySelector('.stats-strip');
+  if (strip) statsObserver.observe(strip);
+
+  /* ============================================================
+     2. SCROLL REVEAL — fade-up on sections/cards
+     ============================================================ */
+  const revealEls = document.querySelectorAll('.dash-card, .skill-card, .section-title, .section-desc, .section-label');
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        revealObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  revealEls.forEach((el, i) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(28px)';
+    el.style.transition = `opacity 0.6s ease ${(i % 6) * 0.08}s, transform 0.6s ease ${(i % 6) * 0.08}s`;
+    revealObs.observe(el);
+  });
+
+  document.head.insertAdjacentHTML('beforeend', `<style>
+    .revealed { opacity: 1 !important; transform: none !important; }
+  </style>`);
+
+  /* ============================================================
+     3. HERO TYPING EFFECT — subtitle
+     ============================================================ */
+  const subEl = document.querySelector('.hero-sub');
+  if (subEl) {
+    const originalText = subEl.textContent;
+    subEl.textContent = '';
+    subEl.style.animation = 'none';
+    subEl.style.opacity = '1';
+    let i = 0;
+    const speed = 18;
+    function typeChar() {
+      if (i < originalText.length) {
+        subEl.textContent += originalText[i++];
+        setTimeout(typeChar, speed);
+      }
+    }
+    setTimeout(typeChar, 700);
+  }
+
+  /* ============================================================
+     4. RADAR / PULSE CANVAS — hero background decoration
+     ============================================================ */
+  const hero = document.querySelector('.hero');
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:absolute;top:0;right:0;width:50%;height:100%;pointer-events:none;opacity:0.18;z-index:0';
+  hero.appendChild(canvas);
+
+  const ctx = canvas.getContext('2d');
+  let animFrame;
+
+  function resizeCanvas() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  const cx = () => canvas.width * 0.55;
+  const cy = () => canvas.height * 0.45;
+  const maxR = () => Math.min(canvas.width, canvas.height) * 0.45;
+
+  let angle = 0;
+  const dots = Array.from({length: 18}, () => ({
+    r: Math.random() * 0.85 + 0.15,
+    a: Math.random() * Math.PI * 2,
+    size: Math.random() * 2.5 + 1,
+    alpha: Math.random() * 0.6 + 0.4,
+    blip: false,
+    blipAlpha: 0,
+  }));
+
+  function drawRadar() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const x = cx(), y = cy(), r = maxR();
+
+    // concentric circles
+    for (let i = 1; i <= 4; i++) {
+      ctx.beginPath();
+      ctx.arc(x, y, r * (i / 4), 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(46,184,212,0.3)';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+    }
+
+    // crosshairs
+    ctx.beginPath();
+    ctx.moveTo(x - r, y); ctx.lineTo(x + r, y);
+    ctx.moveTo(x, y - r); ctx.lineTo(x, y + r);
+    ctx.strokeStyle = 'rgba(46,184,212,0.2)';
+    ctx.lineWidth = 0.6;
+    ctx.stroke();
+
+    // sweep
+    const sweepGrad = ctx.createConicalGradient ? null : null;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    const grad = ctx.createLinearGradient(0, 0, r, 0);
+    grad.addColorStop(0, 'rgba(46,184,212,0.0)');
+    grad.addColorStop(0.7, 'rgba(46,184,212,0.08)');
+    grad.addColorStop(1, 'rgba(46,184,212,0.35)');
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, r, -0.6, 0);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(46,184,212,0.08)';
+    ctx.fill();
+
+    // sweep line
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(r, 0);
+    ctx.strokeStyle = 'rgba(46,184,212,0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+
+    // dots / blips
+    dots.forEach(d => {
+      const dx = x + Math.cos(d.a) * d.r * r;
+      const dy = y + Math.sin(d.a) * d.r * r;
+
+      // detect sweep passing over dot
+      const normalA = ((d.a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+      const normalSweep = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+      const diff = (normalSweep - normalA + Math.PI * 2) % (Math.PI * 2);
+      if (diff < 0.08) { d.blip = true; d.blipAlpha = 1; }
+      if (d.blip) {
+        ctx.beginPath();
+        ctx.arc(dx, dy, d.size * 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(46,184,212,${d.blipAlpha * 0.5})`;
+        ctx.fill();
+        d.blipAlpha = Math.max(0, d.blipAlpha - 0.012);
+        if (d.blipAlpha <= 0) d.blip = false;
+      }
+
+      ctx.beginPath();
+      ctx.arc(dx, dy, d.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(46,184,212,${d.alpha * 0.8})`;
+      ctx.fill();
+    });
+
+    angle += 0.012;
+    animFrame = requestAnimationFrame(drawRadar);
+  }
+  drawRadar();
+
+  /* ============================================================
+     5. SKILL BARS — animate on scroll
+     ============================================================ */
+  const skillFills = document.querySelectorAll('.skill-fill');
+  const skillObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const fill = entry.target;
+        const target = fill.style.width;
+        fill.style.width = '0%';
+        fill.style.transition = 'width 1.4s cubic-bezier(0.4,0,0.2,1)';
+        setTimeout(() => { fill.style.width = target; }, 100);
+        skillObs.unobserve(fill);
+      }
+    });
+  }, { threshold: 0.3 });
+  skillFills.forEach(el => skillObs.observe(el));
+
+  /* ============================================================
+     6. DASH CARD — tilt effect on hover
+     ============================================================ */
+  document.querySelectorAll('.dash-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const rect = card.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) / rect.width - 0.5;
+      const my = (e.clientY - rect.top) / rect.height - 0.5;
+      card.style.transform = `perspective(800px) rotateY(${mx * 8}deg) rotateX(${-my * 6}deg) translateY(-4px)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+      card.style.transition = 'transform 0.4s ease';
+    });
+    card.addEventListener('mouseenter', () => {
+      card.style.transition = 'transform 0.1s ease';
+    });
+  });
+});
+</script>
 </body>
 </html>

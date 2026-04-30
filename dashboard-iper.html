@@ -58,6 +58,20 @@
   .risk-badge.BA{background:rgba(61,186,124,0.18);color:var(--green)}
 
   @media(max-width:900px){.kpi-row,.grid-2,.grid-3{grid-template-columns:1fr}}
+  /* === FILTER BAR === */
+  .filter-bar{display:flex;flex-wrap:wrap;align-items:center;gap:1rem;background:rgba(22,34,51,0.8);border:1px solid var(--border);border-radius:10px;padding:1rem 1.5rem;margin-bottom:1.5rem}
+  .filter-group{display:flex;align-items:center;gap:0.6rem}
+  .filter-label{font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  .filter-btns{display:flex;gap:4px;flex-wrap:wrap}
+  .fbtn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--muted);padding:4px 12px;border-radius:100px;font-size:0.72rem;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+  .fbtn:hover{border-color:var(--gold);color:var(--gold)}
+  .fbtn.active{background:rgba(232,168,56,0.15);border-color:var(--gold);color:var(--gold)}
+  .export-btn{margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(232,168,56,0.1);border:1px solid rgba(232,168,56,0.3);color:var(--gold);padding:6px 16px;border-radius:6px;font-size:0.75rem;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+  .export-btn:hover{background:rgba(232,168,56,0.2)}
+  tr.filtered-out{display:none}
+  tr.highlight td{background:rgba(232,168,56,0.05)}
+  /* Cell glow on active matrix cell */
+  .rm-cell.active-filter{box-shadow:0 0 0 2px rgba(232,168,56,0.6);transform:scale(1.1);z-index:3}
 </style>
 </head>
 <body>
@@ -73,6 +87,34 @@
 </div>
 
 <main>
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Nivel de Riesgo</span>
+      <div class="filter-btns" id="riskFilter">
+        <button class="fbtn active" data-risk="all">Todos</button>
+        <button class="fbtn" data-risk="CR">Crítico</button>
+        <button class="fbtn" data-risk="AL">Alto</button>
+        <button class="fbtn" data-risk="ME">Medio</button>
+        <button class="fbtn" data-risk="BA">Bajo</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Área</span>
+      <div class="filter-btns" id="areaFilter">
+        <button class="fbtn active" data-area="all">Todas</button>
+        <button class="fbtn" data-area="Conducción">Conducción</button>
+        <button class="fbtn" data-area="Mantención">Mantención</button>
+        <button class="fbtn" data-area="Bodega">Bodega</button>
+        <button class="fbtn" data-area="Exposición">Exposición</button>
+      </div>
+    </div>
+    <button class="export-btn" id="exportBtn">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar PNG
+    </button>
+  </div>
+
   <div class="kpi-row">
     <div class="kpi cr"><div class="kpi-label">Riesgo Crítico</div><div class="kpi-val red">8</div><div style="font-size:0.72rem;color:var(--muted);margin-top:4px">Requiere control inmediato</div></div>
     <div class="kpi hi"><div class="kpi-label">Riesgo Alto</div><div class="kpi-val gold">14</div><div style="font-size:0.72rem;color:var(--muted);margin-top:4px">Plan de acción 30 días</div></div>
@@ -128,7 +170,8 @@
 <script>
 const grid={color:'rgba(255,255,255,0.05)'};
 const tick={color:'#8A9BB0',font:{family:'DM Sans',size:11}};
-new Chart(document.getElementById('barRisk'),{
+
+const barRisk = new Chart(document.getElementById('barRisk'),{
   type:'bar',
   data:{
     labels:['Mecánico','Eléctrico','Ergonómico','Químico','Psicosocial','Locativo','Tránsito','Biológico'],
@@ -136,15 +179,137 @@ new Chart(document.getElementById('barRisk'),{
       label:'Peligros',
       data:[18,10,16,6,9,8,12,4],
       backgroundColor:['rgba(232,68,85,0.7)','rgba(232,168,56,0.7)','rgba(46,184,212,0.7)','rgba(245,158,11,0.7)','rgba(200,120,220,0.7)','rgba(80,200,140,0.7)','rgba(232,68,85,0.5)','rgba(100,180,255,0.6)'],
-      borderRadius:5,
-      borderWidth:0
+      borderRadius:5,borderWidth:0
     }]
   },
   options:{
-    responsive:true,
-    plugins:{legend:{display:false}},
+    responsive:true,animation:{duration:500},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(13,27,42,0.95)',borderColor:'rgba(232,168,56,0.3)',borderWidth:1,callbacks:{label:(ctx)=>`${ctx.parsed.y} peligros identificados`}}},
     scales:{x:{grid,ticks:tick},y:{grid,ticks:tick,beginAtZero:true,title:{display:true,text:'N° de peligros',color:'#8A9BB0',font:{size:11}}}}
   }
+});
+
+// Filter rows in IPER table
+function filterTable() {
+  const risk = document.querySelector('#riskFilter .fbtn.active')?.dataset.risk || 'all';
+  const area = document.querySelector('#areaFilter .fbtn.active')?.dataset.area || 'all';
+  document.querySelectorAll('tbody tr').forEach(tr => {
+    // Skip expanded detail rows — they follow their parent
+    if (tr.classList.contains('expanded-row')) {
+      // Show/hide expanded row together with its preceding sibling
+      const prev = tr.previousElementSibling;
+      tr.classList.toggle('filtered-out', prev ? prev.classList.contains('filtered-out') : false);
+      return;
+    }
+    const areaCell = tr.cells[0]?.textContent?.trim() || '';
+    const levelCell = tr.cells[3]?.textContent?.trim() || '';
+    const riskMatch = risk === 'all' || levelCell.includes(risk === 'CR' ? 'CRÍTICO' : risk === 'AL' ? 'ALTO' : risk === 'ME' ? 'MEDIO' : 'BAJO');
+    const areaMatch = area === 'all' || areaCell.includes(area);
+    tr.classList.toggle('filtered-out', !(riskMatch && areaMatch));
+  });
+  updateKPIHighlight(risk);
+}
+
+function updateKPIHighlight(risk) {
+  const kpis = document.querySelectorAll('.kpi');
+  kpis.forEach(k => k.style.opacity = '1');
+  if (risk === 'all') return;
+  const map = { CR:0, AL:1, ME:2, BA:3 };
+  kpis.forEach((k,i) => { if(i !== map[risk]) k.style.opacity = '0.35'; });
+}
+
+document.getElementById('riskFilter').addEventListener('click', e => {
+  const btn = e.target.closest('.fbtn');
+  if(!btn) return;
+  document.querySelectorAll('#riskFilter .fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // Clear matrix cell highlight when using filter buttons directly
+  document.querySelectorAll('.rm-cell').forEach(c=>c.classList.remove('active-filter'));
+  filterTable();
+});
+
+document.getElementById('areaFilter').addEventListener('click', e => {
+  const btn = e.target.closest('.fbtn');
+  if(!btn) return;
+  document.querySelectorAll('#areaFilter .fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  filterTable();
+});
+
+// Row interactions
+document.querySelectorAll('tbody tr').forEach(tr => {
+  tr.style.cursor = 'pointer';
+  tr.addEventListener('mouseenter', ()=>tr.classList.add('highlight'));
+  tr.addEventListener('mouseleave', ()=>tr.classList.remove('highlight'));
+  tr.addEventListener('click', ()=>{
+    // Toggle expanded info
+    const existing = tr.nextElementSibling;
+    if (existing && existing.classList.contains('expanded-row')) {
+      existing.remove(); return;
+    }
+    const area = tr.cells[0]?.textContent || '';
+    const peligro = tr.cells[1]?.textContent || '';
+    const control = tr.cells[4]?.textContent || '';
+    const medida = tr.cells[5]?.textContent || '';
+    const exp = document.createElement('tr');
+    exp.className = 'expanded-row';
+    exp.innerHTML = `<td colspan="6" style="background:rgba(232,168,56,0.06);border-bottom:1px solid rgba(232,168,56,0.2);padding:1rem 1.5rem;font-size:0.8rem">
+      <strong style="color:var(--gold)">${peligro}</strong><br>
+      <span style="color:var(--muted)">Área:</span> ${area} &nbsp;·&nbsp;
+      <span style="color:var(--muted)">Control actual:</span> ${control} &nbsp;·&nbsp;
+      <span style="color:var(--muted)">Medida adicional:</span> <strong style="color:var(--cyan)">${medida}</strong>
+    </td>`;
+    tr.after(exp);
+  });
+});
+
+// Matrix cell click — filter table
+document.querySelectorAll('.rm-cell').forEach(cell => {
+  cell.style.cursor = 'pointer';
+  cell.addEventListener('click', () => {
+    const val = parseInt(cell.textContent);
+    let risk = 'all';
+    if (val >= 15) risk = 'CR';
+    else if (val >= 10) risk = 'AL';
+    else if (val >= 5) risk = 'ME';
+    else risk = 'BA';
+    document.querySelectorAll('#riskFilter .fbtn').forEach(b=>{
+      b.classList.toggle('active', b.dataset.risk === risk);
+    });
+    document.querySelectorAll('.rm-cell').forEach(c=>c.classList.remove('active-filter'));
+    cell.classList.add('active-filter');
+    filterTable();
+  });
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const link = document.createElement('a');
+  link.download = 'iper-riesgos.png';
+  link.href = barRisk.toBase64Image();
+  link.click();
+});
+
+// KPI counter animation
+function animNum(el, target, suffix='', decimals=0, delay=0) {
+  setTimeout(()=>{
+    const orig = el.style.color;
+    const start = performance.now();
+    function up(now){
+      const p = Math.min((now-start)/1200,1);
+      const e = 1-Math.pow(1-p,3);
+      el.textContent = (decimals ? (e*parseFloat(target)).toFixed(decimals) : Math.floor(e*parseFloat(target))) + suffix;
+      if(p<1) requestAnimationFrame(up);
+      else el.textContent = target+suffix;
+    }
+    requestAnimationFrame(up);
+  }, delay);
+}
+window.addEventListener('load', ()=>{
+  const vals = document.querySelectorAll('.kpi-val');
+  animNum(vals[0],'8','',0,0);
+  animNum(vals[1],'14','',0,100);
+  animNum(vals[2],'22','',0,200);
+  animNum(vals[3],'31','',0,300);
 });
 </script>
 </body>

@@ -50,6 +50,18 @@
   .pill.red{background:rgba(232,68,85,0.15);color:var(--red)}
   .pill.purple{background:rgba(200,120,220,0.15);color:var(--purple)}
   @media(max-width:900px){.kpi-row,.grid-2,.exam-grid{grid-template-columns:1fr}}
+  /* === FILTER BAR === */
+  .filter-bar{display:flex;flex-wrap:wrap;align-items:center;gap:1rem;background:rgba(22,34,51,0.8);border:1px solid var(--border);border-radius:10px;padding:1rem 1.5rem;margin-bottom:1.5rem}
+  .filter-group{display:flex;align-items:center;gap:0.6rem}
+  .filter-label{font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  .filter-btns{display:flex;gap:4px;flex-wrap:wrap}
+  .fbtn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--muted);padding:4px 12px;border-radius:100px;font-size:0.72rem;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+  .fbtn:hover{border-color:var(--purple);color:var(--purple)}
+  .fbtn.active{background:rgba(200,120,220,0.15);border-color:var(--purple);color:var(--purple)}
+  .export-btn{margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(200,120,220,0.1);border:1px solid rgba(200,120,220,0.25);color:var(--purple);padding:6px 16px;border-radius:6px;font-size:0.75rem;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+  .export-btn:hover{background:rgba(200,120,220,0.2)}
+  tr.filtered-out{display:none}
+  tr.highlight td{background:rgba(200,120,220,0.05)}
 </style>
 </head>
 <body>
@@ -65,6 +77,32 @@
 </div>
 
 <main>
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Protocolo</span>
+      <div class="filter-btns" id="protFilter">
+        <button class="fbtn active" data-prot="all">Todos</button>
+        <button class="fbtn" data-prot="TMERT">TMERT</button>
+        <button class="fbtn" data-prot="PREXOR">PREXOR</button>
+        <button class="fbtn" data-prot="Ocupacional">Ocupacional</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Nivel Caso</span>
+      <div class="filter-btns" id="levelFilter">
+        <button class="fbtn active" data-level="all">Todos</button>
+        <button class="fbtn" data-level="Alto">Alto</button>
+        <button class="fbtn" data-level="Medio">Medio</button>
+        <button class="fbtn" data-level="Leve">Leve</button>
+      </div>
+    </div>
+    <button class="export-btn" id="exportBtn">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar PNG
+    </button>
+  </div>
+
   <div class="kpi-row">
     <div class="kpi"><div class="kpi-label">Exámenes Realizados</div><div class="kpi-val">284</div><div class="kpi-sub">Ocup. + Preocupacionales</div></div>
     <div class="kpi"><div class="kpi-label">Aptitud Sin Restricción</div><div class="kpi-val">91%</div><div class="kpi-sub">258 trabajadores aptos</div></div>
@@ -145,20 +183,34 @@
 const grid={color:'rgba(255,255,255,0.05)'};
 const tick={color:'#8A9BB0',font:{family:'DM Sans',size:11}};
 
-new Chart(document.getElementById('barExam'),{
-  type:'bar',
-  data:{
-    labels:['Apto sin restricción','Apto con restricción','Apto temporal','No apto','Pendiente'],
-    datasets:[{
-      data:[258,16,6,4,0],
-      backgroundColor:['rgba(61,186,124,0.75)','rgba(46,184,212,0.7)','rgba(232,168,56,0.7)','rgba(232,68,85,0.7)','rgba(139,155,176,0.3)'],
-      borderRadius:5,borderWidth:0
-    }]
-  },
-  options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid,ticks:{...tick,maxRotation:30}},y:{grid,ticks:tick,beginAtZero:true}}}
-});
+// Chart data by protocol filter
+const EXAM_DATA = {
+  all:  [258,16,6,4,0],
+  TMERT: [44,8,3,0,0],
+  PREXOR: [22,4,2,2,0],
+  Ocupacional: [186,4,1,2,0]
+};
 
-new Chart(document.getElementById('lineAus'),{
+let barExam, lineAus;
+
+function buildBarExam(prot) {
+  const d = EXAM_DATA[prot] || EXAM_DATA.all;
+  if(barExam) {
+    barExam.data.datasets[0].data = d;
+    barExam.update();
+  } else {
+    barExam = new Chart(document.getElementById('barExam'),{
+      type:'bar',
+      data:{
+        labels:['Apto sin restricción','Apto con restricción','Apto temporal','No apto','Pendiente'],
+        datasets:[{data:d,backgroundColor:['rgba(61,186,124,0.75)','rgba(46,184,212,0.7)','rgba(232,168,56,0.7)','rgba(232,68,85,0.7)','rgba(139,155,176,0.3)'],borderRadius:5,borderWidth:0}]
+      },
+      options:{responsive:true,animation:{duration:500},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(13,27,42,0.95)',borderColor:'rgba(200,120,220,0.3)',borderWidth:1}},scales:{x:{grid,ticks:{...tick,maxRotation:30}},y:{grid,ticks:tick,beginAtZero:true}}}
+    });
+  }
+}
+
+lineAus = new Chart(document.getElementById('lineAus'),{
   type:'line',
   data:{
     labels:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov'],
@@ -167,7 +219,80 @@ new Chart(document.getElementById('lineAus'),{
       {label:'Días perdidos Accidente',data:[12,8,6,10,5,7,4,8,6,5,4],borderColor:'rgba(232,68,85,0.6)',borderWidth:1.5,borderDash:[4,4],pointRadius:3,tension:0.4,fill:false}
     ]
   },
-  options:{responsive:true,plugins:{legend:{labels:{color:'#8A9BB0',font:{family:'DM Sans',size:11},boxWidth:14}}},scales:{x:{grid,ticks:tick},y:{grid,ticks:tick,beginAtZero:true,title:{display:true,text:'Días perdidos',color:'#8A9BB0',font:{size:11}}}}}
+  options:{responsive:true,animation:{duration:500},plugins:{legend:{labels:{color:'#8A9BB0',font:{family:'DM Sans',size:11},boxWidth:14}},tooltip:{backgroundColor:'rgba(13,27,42,0.95)',borderColor:'rgba(200,120,220,0.3)',borderWidth:1}},scales:{x:{grid,ticks:tick},y:{grid,ticks:tick,beginAtZero:true,title:{display:true,text:'Días perdidos',color:'#8A9BB0',font:{size:11}}}}}
+});
+
+buildBarExam('all');
+
+// Filters
+function filterTableByLevel(level) {
+  document.querySelectorAll('tbody tr').forEach(tr => {
+    if(level === 'all') { tr.classList.remove('filtered-out'); return; }
+    const cell = tr.cells[3]?.textContent?.trim() || '';
+    tr.classList.toggle('filtered-out', !cell.includes(level));
+  });
+}
+
+document.getElementById('protFilter').addEventListener('click', e => {
+  const btn = e.target.closest('.fbtn');
+  if(!btn) return;
+  document.querySelectorAll('#protFilter .fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildBarExam(btn.dataset.prot);
+  // Re-apply active level filter after protocol change
+  const activeLevel = document.querySelector('#levelFilter .fbtn.active')?.dataset.level || 'all';
+  filterTableByLevel(activeLevel);
+});
+
+document.getElementById('levelFilter').addEventListener('click', e => {
+  const btn = e.target.closest('.fbtn');
+  if(!btn) return;
+  document.querySelectorAll('#levelFilter .fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  filterTableByLevel(btn.dataset.level);
+});
+
+// Row hover
+document.querySelectorAll('tbody tr').forEach(tr => {
+  tr.addEventListener('mouseenter', ()=>tr.classList.add('highlight'));
+  tr.addEventListener('mouseleave', ()=>tr.classList.remove('highlight'));
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const link = document.createElement('a');
+  link.download = 'salud-ocupacional.png';
+  link.href = barExam.toBase64Image();
+  link.click();
+});
+
+// Animate exam fill bars on load
+window.addEventListener('load', () => {
+  document.querySelectorAll('.exam-fill').forEach((el, i) => {
+    const target = el.style.width;
+    el.style.width = '0%';
+    el.style.transition = `width 1.2s cubic-bezier(0.4,0,0.2,1) ${i*0.1}s`;
+    setTimeout(() => { el.style.width = target; }, 200);
+  });
+
+  // KPI counters
+  function animNum(el, target, suffix='', decimals=0, delay=0) {
+    setTimeout(()=>{
+      const start = performance.now();
+      function up(now){
+        const p = Math.min((now-start)/1200,1);
+        const e = 1-Math.pow(1-p,3);
+        el.textContent = (decimals ? (e*parseFloat(target)).toFixed(decimals) : Math.floor(e*parseFloat(target))) + suffix;
+        if(p<1) requestAnimationFrame(up);
+        else el.textContent = target+suffix;
+      }
+      requestAnimationFrame(up);
+    }, delay);
+  }
+  const vals = document.querySelectorAll('.kpi-val');
+  animNum(vals[0],'284','',0,0);
+  animNum(vals[1],'91','%',0,100);
+  animNum(vals[2],'1.8','%',1,200);
+  animNum(vals[3],'12','',0,300);
 });
 </script>
 </body>

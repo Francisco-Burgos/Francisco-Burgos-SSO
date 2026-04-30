@@ -29,13 +29,9 @@
   .chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.5rem}
   .chart-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;margin-bottom:0.3rem}
   .chart-sub{font-size:0.75rem;color:var(--muted);margin-bottom:1.2rem}
-
-  /* Gauge */
   .gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:0.5rem;padding:1rem 0}
   .gauge-num{font-family:'Syne',sans-serif;font-weight:800;font-size:3rem;color:var(--emerald)}
   .gauge-label{font-size:0.78rem;color:var(--muted)}
-
-  /* NC table */
   table{width:100%;border-collapse:collapse}
   th{font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:0 0.75rem 0.75rem;text-align:left;border-bottom:1px solid var(--border)}
   td{padding:0.55rem 0.75rem;font-size:0.8rem;border-bottom:1px solid rgba(255,255,255,0.04)}
@@ -48,6 +44,19 @@
   .sev{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
   .sev.C{background:var(--red)}.sev.M{background:var(--gold)}.sev.L{background:var(--green)}
   @media(max-width:900px){.kpi-row,.grid-2{grid-template-columns:1fr}}
+  .filter-bar{display:flex;flex-wrap:wrap;align-items:center;gap:1rem;background:rgba(22,34,51,0.8);border:1px solid var(--border);border-radius:10px;padding:1rem 1.5rem;margin-bottom:1.5rem}
+  .filter-group{display:flex;align-items:center;gap:0.6rem}
+  .filter-label{font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  .filter-btns{display:flex;gap:4px;flex-wrap:wrap}
+  .fbtn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--muted);padding:4px 12px;border-radius:100px;font-size:0.72rem;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+  .fbtn:hover{border-color:var(--emerald);color:var(--emerald)}
+  .fbtn.active{background:rgba(80,220,140,0.15);border-color:var(--emerald);color:var(--emerald)}
+  .export-btn{margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(80,220,140,0.1);border:1px solid rgba(80,220,140,0.25);color:var(--emerald);padding:6px 16px;border-radius:6px;font-size:0.75rem;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+  .export-btn:hover{background:rgba(80,220,140,0.2)}
+  tr.highlight td{background:rgba(80,220,140,0.06)}
+  tr.filtered-out{display:none}
+  .toast-message{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0.8rem 1.2rem;font-size:0.78rem;color:var(--emerald);z-index:999;opacity:0;transform:translateY(12px);transition:all 0.3s;pointer-events:none}
+  .toast-message.show{opacity:1;transform:none}
 </style>
 </head>
 <body>
@@ -63,17 +72,43 @@
 </div>
 
 <main>
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Período</span>
+      <div class="filter-btns" id="periodFilter">
+        <button class="fbtn active" data-period="all">Año completo</button>
+        <button class="fbtn" data-period="q1">Q1</button>
+        <button class="fbtn" data-period="q2">Q2</button>
+        <button class="fbtn" data-period="q3">Q3</button>
+        <button class="fbtn" data-period="q4">Q4</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Severidad NC</span>
+      <div class="filter-btns" id="sevFilter">
+        <button class="fbtn active" data-sev="all">Todas</button>
+        <button class="fbtn" data-sev="Crítica">Crítica</button>
+        <button class="fbtn" data-sev="Media">Media</button>
+        <button class="fbtn" data-sev="Leve">Leve</button>
+      </div>
+    </div>
+    <button class="export-btn" id="exportBtn">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar PNG
+    </button>
+  </div>
+
   <div class="kpi-row">
-    <div class="kpi"><div class="kpi-label">Inspecciones Realizadas</div><div class="kpi-val">186</div><div class="kpi-sub">de 200 planificadas (93%)</div></div>
-    <div class="kpi"><div class="kpi-label">Hallazgos Detectados</div><div class="kpi-val">248</div><div class="kpi-sub">Promedio 1.3/inspección</div></div>
-    <div class="kpi"><div class="kpi-label">NC Cerradas</div><div class="kpi-val">91%</div><div class="kpi-sub">226 de 248 hallazgos</div></div>
-    <div class="kpi"><div class="kpi-label">NC Pendientes</div><div class="kpi-val" style="color:var(--gold)">22</div><div class="kpi-sub">En plazo de cierre</div></div>
+    <div class="kpi"><div class="kpi-label">Inspecciones Realizadas</div><div class="kpi-val" id="kpiInspecciones">186</div><div class="kpi-sub" id="kpiInspeccionesSub">de 200 planificadas (93%)</div></div>
+    <div class="kpi"><div class="kpi-label">Hallazgos Detectados</div><div class="kpi-val" id="kpiHallazgos">248</div><div class="kpi-sub">Promedio 1.3/inspección</div></div>
+    <div class="kpi"><div class="kpi-label">NC Cerradas</div><div class="kpi-val" id="kpiCerradas">91%</div><div class="kpi-sub" id="kpiCerradasSub">226 de 248 hallazgos</div></div>
+    <div class="kpi"><div class="kpi-label">NC Pendientes</div><div class="kpi-val" id="kpiPendientes" style="color:var(--gold)">22</div><div class="kpi-sub">En plazo de cierre</div></div>
   </div>
 
   <div class="grid-2">
     <div class="chart-card">
       <div class="chart-title">Inspecciones Planificadas vs Realizadas</div>
-      <div class="chart-sub">Seguimiento mensual 2024</div>
+      <div class="chart-sub" id="barSubtitle">Seguimiento mensual 2024 — Año completo</div>
       <canvas id="barInsp" height="130"></canvas>
     </div>
     <div class="chart-card">
@@ -86,13 +121,13 @@
   <div class="grid-2">
     <div class="chart-card">
       <div class="chart-title">Estado de Acciones Correctivas</div>
-      <div class="chart-sub">Seguimiento cierre de hallazgos por mes</div>
+      <div class="chart-sub" id="lineSubtitle">Seguimiento cierre de hallazgos — Año completo</div>
       <canvas id="lineNC" height="120"></canvas>
     </div>
     <div class="chart-card">
       <div class="chart-title">Registro de No Conformidades Abiertas</div>
       <div class="chart-sub">22 hallazgos pendientes de cierre</div>
-      <table>
+      <table id="ncTable">
         <thead><tr><th>N°</th><th>Hallazgo</th><th>Área</th><th>Sev.</th><th>Plazo</th><th>Estado</th></tr></thead>
         <tbody>
           <tr><td>NC-041</td><td>EPP incompleto conductor</td><td>Conducción</td><td><span class="sev M"></span>Media</td><td>05/12</td><td><span class="pill gold">En proceso</span></td></tr>
@@ -105,43 +140,268 @@
       </table>
     </div>
   </div>
+  <div class="toast-message" id="toast"></div>
 </main>
 
 <script>
 const grid={color:'rgba(255,255,255,0.05)'};
 const tick={color:'#8A9BB0',font:{family:'DM Sans',size:11}};
 
-new Chart(document.getElementById('barInsp'),{
-  type:'bar',
-  data:{
-    labels:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov'],
-    datasets:[
-      {label:'Planificadas',data:[17,16,18,17,17,18,17,16,18,17,18],backgroundColor:'rgba(255,255,255,0.07)',borderRadius:4},
-      {label:'Realizadas',data:[16,16,17,16,17,18,16,15,17,16,17],backgroundColor:'rgba(80,220,140,0.65)',borderRadius:4}
-    ]
+// Datos completos por período para inspecciones mensuales
+const INSP_DATA = {
+  all:  { plan:[17,16,18,17,17,18,17,16,18,17,18,16], real:[16,16,17,16,17,18,16,15,17,16,17,15], labels:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'] },
+  q1:   { plan:[17,16,18], real:[16,16,17], labels:['Ene','Feb','Mar'] },
+  q2:   { plan:[17,17,18], real:[16,17,18], labels:['Abr','May','Jun'] },
+  q3:   { plan:[17,16,18], real:[16,15,17], labels:['Jul','Ago','Sep'] },
+  q4:   { plan:[17,18,16], real:[17,16,15], labels:['Oct','Nov','Dic'] },
+};
+
+// NUEVO: Datos para el gráfico de línea (Hallazgos nuevos vs NC cerradas) por período
+const NC_LINE_DATA = {
+  all: {
+    labels: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+    hallazgos: [28,22,25,20,23,22,21,20,24,22,21,19],
+    cerradas: [24,21,24,20,22,22,20,19,23,21,20,18],
+    kpis: { inspecciones: 186, inspeccionesPlan: 200, hallazgos: 248, cerradas: 226, pendientes: 22, pctCierre: 91 }
   },
-  options:{responsive:true,plugins:{legend:{labels:{color:'#8A9BB0',font:{family:'DM Sans',size:11},boxWidth:14}}},scales:{x:{grid,ticks:tick},y:{grid,ticks:tick,beginAtZero:true}}}
+  q1: {
+    labels: ['Ene','Feb','Mar'],
+    hallazgos: [28,22,25],
+    cerradas: [24,21,24],
+    kpis: { inspecciones: 49, inspeccionesPlan: 51, hallazgos: 75, cerradas: 69, pendientes: 6, pctCierre: 92 }
+  },
+  q2: {
+    labels: ['Abr','May','Jun'],
+    hallazgos: [20,23,22],
+    cerradas: [20,22,22],
+    kpis: { inspecciones: 51, inspeccionesPlan: 52, hallazgos: 65, cerradas: 64, pendientes: 1, pctCierre: 98 }
+  },
+  q3: {
+    labels: ['Jul','Ago','Sep'],
+    hallazgos: [21,20,24],
+    cerradas: [20,19,23],
+    kpis: { inspecciones: 48, inspeccionesPlan: 51, hallazgos: 65, cerradas: 62, pendientes: 3, pctCierre: 95 }
+  },
+  q4: {
+    labels: ['Oct','Nov','Dic'],
+    hallazgos: [22,21,19],
+    cerradas: [21,20,18],
+    kpis: { inspecciones: 48, inspeccionesPlan: 46, hallazgos: 62, cerradas: 59, pendientes: 3, pctCierre: 95 }
+  }
+};
+
+// Datos para el doughnut (se mantienen estáticos, representan el año completo)
+const DOUGHNUT_DATA = {
+  labels: ['EPP / Equipos','Orden y Aseo','Señalética','Procedimientos','Infraestructura','Documentación'],
+  values: [58,44,38,42,36,30],
+  colors: ['rgba(232,68,85,0.7)','rgba(232,168,56,0.7)','rgba(46,184,212,0.7)','rgba(80,220,140,0.7)','rgba(200,120,220,0.6)','rgba(100,180,255,0.6)']
+};
+
+let barInsp, doughnutHall, lineNC;
+let activePeriod = 'all';
+
+// Actualizar KPIs según período
+function updateKPIs(period) {
+  const data = NC_LINE_DATA[period];
+  if (!data) return;
+  
+  const kpis = data.kpis;
+  const periodNames = { all: 'Año completo', q1: 'Q1', q2: 'Q2', q3: 'Q3', q4: 'Q4' };
+  
+  const inspeccionesEl = document.getElementById('kpiInspecciones');
+  const inspeccionesSubEl = document.getElementById('kpiInspeccionesSub');
+  const hallazgosEl = document.getElementById('kpiHallazgos');
+  const cerradasEl = document.getElementById('kpiCerradas');
+  const cerradasSubEl = document.getElementById('kpiCerradasSub');
+  const pendientesEl = document.getElementById('kpiPendientes');
+  
+  // Animación de números
+  const animateValue = (el, start, end, suffix = '', decimals = 0, duration = 800) => {
+    const startTime = performance.now();
+    const update = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const current = start + (end - start) * ease;
+      if (decimals > 0) {
+        el.textContent = current.toFixed(decimals) + suffix;
+      } else {
+        el.textContent = Math.floor(current) + suffix;
+      }
+      if (progress < 1) requestAnimationFrame(update);
+      else el.textContent = (decimals > 0 ? end.toFixed(decimals) : Math.floor(end)) + suffix;
+    };
+    requestAnimationFrame(update);
+  };
+  
+  animateValue(inspeccionesEl, parseInt(inspeccionesEl.textContent) || 0, kpis.inspecciones, '', 0, 600);
+  inspeccionesSubEl.textContent = `de ${kpis.inspeccionesPlan} planificadas (${Math.round(kpis.inspecciones/kpis.inspeccionesPlan*100)}%)`;
+  
+  animateValue(hallazgosEl, parseInt(hallazgosEl.textContent) || 0, kpis.hallazgos, '', 0, 600);
+  
+  const pctCierre = Math.round(kpis.cerradas / kpis.hallazgos * 100);
+  animateValue(cerradasEl, parseFloat(cerradasEl.textContent) || 0, pctCierre, '%', 0, 600);
+  cerradasSubEl.textContent = `${kpis.cerradas} de ${kpis.hallazgos} hallazgos`;
+  
+  animateValue(pendientesEl, parseInt(pendientesEl.textContent) || 0, kpis.pendientes, '', 0, 600);
+}
+
+// Gráfico de barras - Inspecciones (actualizado con subtítulo)
+function buildBarInsp(period) {
+  const d = INSP_DATA[period];
+  const periodNames = { all: 'Año completo', q1: 'Q1 (Ene-Mar)', q2: 'Q2 (Abr-Jun)', q3: 'Q3 (Jul-Sep)', q4: 'Q4 (Oct-Dic)' };
+  const subtitle = document.getElementById('barSubtitle');
+  subtitle.textContent = `Seguimiento mensual 2024 — ${periodNames[period]}`;
+  
+  if (barInsp) {
+    barInsp.data.labels = d.labels;
+    barInsp.data.datasets[0].data = d.plan;
+    barInsp.data.datasets[1].data = d.real;
+    barInsp.update();
+  } else {
+    barInsp = new Chart(document.getElementById('barInsp'),{
+      type:'bar',
+      data:{labels:d.labels,datasets:[
+        {label:'Planificadas',data:d.plan,backgroundColor:'rgba(255,255,255,0.07)',borderRadius:4},
+        {label:'Realizadas',data:d.real,backgroundColor:'rgba(80,220,140,0.65)',borderRadius:4}
+      ]},
+      options:{responsive:true,animation:{duration:500},plugins:{legend:{labels:{color:'#8A9BB0',font:{family:'DM Sans',size:11},boxWidth:14}},tooltip:{backgroundColor:'rgba(13,27,42,0.95)',borderColor:'rgba(80,220,140,0.3)',borderWidth:1}},scales:{x:{grid,ticks:tick},y:{grid,ticks:tick,beginAtZero:true}}}
+    });
+  }
+}
+
+// Gráfico de línea - Estado de Acciones Correctivas (AHORA RESPONSIVE AL PERÍODO)
+function buildLineNC(period) {
+  const data = NC_LINE_DATA[period];
+  if (!data) return;
+  
+  const periodNames = { all: 'Año completo', q1: 'Q1 (Ene-Mar)', q2: 'Q2 (Abr-Jun)', q3: 'Q3 (Jul-Sep)', q4: 'Q4 (Oct-Dic)' };
+  const subtitle = document.getElementById('lineSubtitle');
+  subtitle.textContent = `Seguimiento cierre de hallazgos — ${periodNames[period]}`;
+  
+  if (lineNC) {
+    lineNC.data.labels = data.labels;
+    lineNC.data.datasets[0].data = data.hallazgos;
+    lineNC.data.datasets[1].data = data.cerradas;
+    lineNC.update();
+  } else {
+    lineNC = new Chart(document.getElementById('lineNC'),{
+      type:'line',
+      data:{
+        labels: data.labels,
+        datasets: [
+          {label:'Hallazgos nuevos',data:data.hallazgos,borderColor:'rgba(232,68,85,0.7)',borderWidth:2,pointRadius:3,pointBackgroundColor:'rgba(232,68,85,0.7)',tension:0.4,fill:false},
+          {label:'NC cerradas',data:data.cerradas,borderColor:'rgba(80,220,140,0.8)',borderWidth:2,pointRadius:3,pointBackgroundColor:'rgba(80,220,140,0.8)',tension:0.4,fill:true,backgroundColor:'rgba(80,220,140,0.06)'}
+        ]
+      },
+      options:{
+        responsive:true,
+        animation:{duration:500},
+        plugins:{
+          legend:{labels:{color:'#8A9BB0',font:{family:'DM Sans',size:11},boxWidth:14}},
+          tooltip:{backgroundColor:'rgba(13,27,42,0.95)',borderColor:'rgba(80,220,140,0.3)',borderWidth:1}
+        },
+        scales:{x:{grid,ticks:tick},y:{grid,ticks:tick,beginAtZero:true,title:{display:true,text:'Nº de Hallazgos',color:'#8A9BB0',font:{size:11}}}}
+      }
+    });
+  }
+}
+
+// Gráfico de doughnut (estático, representa distribución anual)
+function buildDoughnut() {
+  if (doughnutHall) {
+    doughnutHall.data.datasets[0].data = DOUGHNUT_DATA.values;
+    doughnutHall.update();
+  } else {
+    doughnutHall = new Chart(document.getElementById('doughnutHall'),{
+      type:'doughnut',
+      data:{
+        labels: DOUGHNUT_DATA.labels,
+        datasets:[{data:DOUGHNUT_DATA.values,backgroundColor:DOUGHNUT_DATA.colors,borderWidth:0,hoverOffset:8}]
+      },
+      options:{responsive:true,cutout:'62%',animation:{duration:500},plugins:{legend:{position:'right',labels:{color:'#8A9BB0',font:{family:'DM Sans',size:11},boxWidth:12,padding:10}},tooltip:{backgroundColor:'rgba(13,27,42,0.95)',borderColor:'rgba(80,220,140,0.3)',borderWidth:1}}}
+    });
+  }
+}
+
+// Actualización completa al cambiar período
+function fullUpdate(period) {
+  buildBarInsp(period);
+  buildLineNC(period);
+  updateKPIs(period);
+  showToast(period);
+}
+
+// Toast de notificación
+function showToast(period) {
+  const data = NC_LINE_DATA[period];
+  if (!data) return;
+  const periodNames = { all: 'Año completo', q1: 'Primer trimestre', q2: 'Segundo trimestre', q3: 'Tercer trimestre', q4: 'Cuarto trimestre' };
+  const toast = document.getElementById('toast');
+  const totalHallazgos = data.hallazgos.reduce((a,b) => a + b, 0);
+  const totalCerradas = data.cerradas.reduce((a,b) => a + b, 0);
+  const pct = Math.round(totalCerradas / totalHallazgos * 100);
+  toast.textContent = `${periodNames[period]}: ${totalHallazgos} hallazgos detectados, ${totalCerradas} cerrados (${pct}%)`;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// FILTRO DE PERÍODO
+document.getElementById('periodFilter').addEventListener('click', e => {
+  const btn = e.target.closest('.fbtn');
+  if(!btn) return;
+  document.querySelectorAll('#periodFilter .fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  activePeriod = btn.dataset.period;
+  fullUpdate(activePeriod);
 });
 
-new Chart(document.getElementById('doughnutHall'),{
-  type:'doughnut',
-  data:{
-    labels:['EPP / Equipos','Orden y Aseo','Señalética','Procedimientos','Infraestructura','Documentación'],
-    datasets:[{data:[58,44,38,42,36,30],backgroundColor:['rgba(232,68,85,0.7)','rgba(232,168,56,0.7)','rgba(46,184,212,0.7)','rgba(80,220,140,0.7)','rgba(200,120,220,0.6)','rgba(100,180,255,0.6)'],borderWidth:0,hoverOffset:8}]
-  },
-  options:{responsive:true,cutout:'62%',plugins:{legend:{position:'right',labels:{color:'#8A9BB0',font:{family:'DM Sans',size:11},boxWidth:12,padding:10}}}}
+// FILTRO DE SEVERIDAD para la tabla de NC
+document.getElementById('sevFilter').addEventListener('click', e => {
+  const btn = e.target.closest('.fbtn');
+  if(!btn) return;
+  document.querySelectorAll('#sevFilter .fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const sev = btn.dataset.sev;
+  document.querySelectorAll('#ncTable tbody tr').forEach(tr => {
+    if(sev === 'all') { tr.classList.remove('filtered-out'); return; }
+    const cell = tr.cells[3];
+    const sevText = Array.from(cell.childNodes)
+      .filter(n => n.nodeType === Node.TEXT_NODE)
+      .map(n => n.textContent.trim())
+      .join('');
+    tr.classList.toggle('filtered-out', !sevText.includes(sev));
+  });
 });
 
-new Chart(document.getElementById('lineNC'),{
-  type:'line',
-  data:{
-    labels:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov'],
-    datasets:[
-      {label:'Hallazgos nuevos',data:[28,22,25,20,23,22,21,20,24,22,21],borderColor:'rgba(232,68,85,0.7)',borderWidth:2,pointRadius:3,pointBackgroundColor:'rgba(232,68,85,0.7)',tension:0.4,fill:false},
-      {label:'NC cerradas',data:[24,21,24,20,22,22,20,19,23,21,20],borderColor:'rgba(80,220,140,0.8)',borderWidth:2,pointRadius:3,pointBackgroundColor:'rgba(80,220,140,0.8)',tension:0.4,fill:true,backgroundColor:'rgba(80,220,140,0.06)'}
-    ]
-  },
-  options:{responsive:true,plugins:{legend:{labels:{color:'#8A9BB0',font:{family:'DM Sans',size:11},boxWidth:14}}},scales:{x:{grid,ticks:tick},y:{grid,ticks:tick,beginAtZero:true}}}
+// Hover highlight para filas de tabla
+document.querySelectorAll('#ncTable tbody tr').forEach(tr => {
+  tr.addEventListener('mouseenter', ()=>tr.classList.add('highlight'));
+  tr.addEventListener('mouseleave', ()=>tr.classList.remove('highlight'));
+});
+
+// Exportar PNG del gráfico activo
+document.getElementById('exportBtn').addEventListener('click', () => {
+  if (barInsp) {
+    const link = document.createElement('a');
+    link.download = `inspecciones-${activePeriod}.png`;
+    link.href = barInsp.toBase64Image();
+    link.click();
+  }
+});
+
+// Inicialización
+window.addEventListener('load', () => {
+  buildBarInsp('all');
+  buildLineNC('all');
+  buildDoughnut();
+  
+  // Animación inicial de KPIs
+  setTimeout(() => {
+    const vals = document.querySelectorAll('.kpi-val');
+    // Los KPIs ya se actualizan con updateKPIs, pero animamos los valores iniciales
+    updateKPIs('all');
+  }, 100);
 });
 </script>
 </body>

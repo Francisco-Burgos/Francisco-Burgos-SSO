@@ -60,6 +60,17 @@
   .pill.green{background:rgba(61,186,124,0.15);color:var(--green)}
 
   @media(max-width:900px){.kpi-row{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}.bottom-grid{grid-template-columns:1fr}}
+
+  /* === FILTER BAR === */
+  .filter-bar{display:flex;flex-wrap:wrap;align-items:center;gap:1.2rem;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem 1.5rem;margin-bottom:1.5rem}
+  .filter-group{display:flex;align-items:center;gap:0.6rem}
+  .filter-label{font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  .filter-btns{display:flex;gap:4px;flex-wrap:wrap}
+  .fbtn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--muted);padding:4px 12px;border-radius:100px;font-size:0.72rem;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+  .fbtn:hover{border-color:var(--cyan);color:var(--cyan)}
+  .fbtn.active{background:rgba(46,184,212,0.15);border-color:var(--cyan);color:var(--cyan)}
+  .export-btn{margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(46,184,212,0.1);border:1px solid var(--border);color:var(--cyan);padding:6px 16px;border-radius:6px;font-size:0.75rem;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+  .export-btn:hover{background:rgba(46,184,212,0.2)}
 </style>
 </head>
 <body>
@@ -76,6 +87,34 @@
 </div>
 
 <main>
+  <!-- Filter toolbar -->
+  <div class="filter-bar" id="filterBar">
+    <div class="filter-group">
+      <span class="filter-label">Año</span>
+      <div class="filter-btns" id="yearFilter">
+        <button class="fbtn active" data-year="all">Todos</button>
+        <button class="fbtn" data-year="2022">2022</button>
+        <button class="fbtn" data-year="2023">2023</button>
+        <button class="fbtn" data-year="2024">2024</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Área</span>
+      <div class="filter-btns" id="areaFilter">
+        <button class="fbtn active" data-area="all">Todas</button>
+        <button class="fbtn" data-area="Conducción">Conducción</button>
+        <button class="fbtn" data-area="Bodega">Bodega</button>
+        <button class="fbtn" data-area="Mantención">Mantención</button>
+        <button class="fbtn" data-area="Carga/Desc.">Carga/Desc.</button>
+        <button class="fbtn" data-area="Administrativo">Adm.</button>
+      </div>
+    </div>
+    <button class="export-btn" id="exportBtn">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar PNG
+    </button>
+  </div>
+
   <!-- KPIs -->
   <div class="kpi-row">
     <div class="kpi warn">
@@ -143,38 +182,100 @@ const C = Chart;
 const grid = { color:'rgba(255,255,255,0.05)' };
 const tick = { color:'#8A9BB0', font:{ family:'DM Sans', size:11 } };
 
+// === DATA ===
+const DATA = {
+  line: {
+    labels: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+    all: {
+      2022: [9.2,8.7,8.1,9.5,7.8,8.3,9.0,8.6,7.9,8.2,7.5,7.1],
+      2023: [7.0,6.8,6.2,7.1,5.9,6.4,6.8,6.1,5.8,5.5,5.9,5.8],
+      2024: [5.5,5.1,4.8,5.2,4.3,4.7,4.5,4.2,4.9,4.6,4.4,4.8],
+    },
+    'Conducción': {
+      2022: [11.2,10.8,10.1,11.5,9.8,10.3,11.0,10.6,9.9,10.2,9.5,9.1],
+      2023: [8.8,8.4,7.9,8.7,7.4,8.0,8.5,7.7,7.3,7.0,7.4,7.2],
+      2024: [7.0,6.6,6.2,6.8,5.8,6.2,6.0,5.7,6.3,6.0,5.8,6.1],
+    },
+    'Bodega': {
+      2022: [8.4,7.9,7.3,8.7,7.1,7.6,8.2,7.8,7.1,7.5,6.8,6.4],
+      2023: [6.2,6.0,5.5,6.3,5.2,5.7,6.0,5.4,5.1,4.9,5.2,5.1],
+      2024: [4.8,4.4,4.1,4.6,3.8,4.1,3.9,3.7,4.3,4.0,3.8,4.2],
+    },
+    'Mantención': {
+      2022: [7.8,7.3,6.8,8.1,6.6,7.1,7.7,7.3,6.6,7.0,6.3,5.9],
+      2023: [5.7,5.5,5.0,5.8,4.8,5.2,5.5,5.0,4.7,4.5,4.8,4.7],
+      2024: [4.4,4.0,3.8,4.2,3.5,3.8,3.6,3.4,4.0,3.7,3.5,3.9],
+    },
+    'Carga/Desc.': {
+      2022: [6.9,6.5,6.0,7.2,5.8,6.3,6.8,6.4,5.8,6.1,5.5,5.2],
+      2023: [5.0,4.8,4.4,5.1,4.2,4.6,4.8,4.3,4.1,3.9,4.2,4.1],
+      2024: [3.8,3.5,3.3,3.7,3.1,3.4,3.2,3.0,3.5,3.3,3.1,3.4],
+    },
+    'Administrativo': {
+      2022: [3.1,2.8,2.5,3.3,2.4,2.7,3.0,2.8,2.4,2.6,2.2,2.0],
+      2023: [2.2,2.1,1.9,2.3,1.8,2.0,2.1,1.9,1.7,1.6,1.8,1.7],
+      2024: [1.8,1.6,1.5,1.7,1.3,1.5,1.4,1.3,1.6,1.4,1.3,1.5],
+    },
+    // Keep legacy numeric keys for backwards compat
+    2022: [9.2,8.7,8.1,9.5,7.8,8.3,9.0,8.6,7.9,8.2,7.5,7.1],
+    2023: [7.0,6.8,6.2,7.1,5.9,6.4,6.8,6.1,5.8,5.5,5.9,5.8],
+    2024: [5.5,5.1,4.8,5.2,4.3,4.7,4.5,4.2,4.9,4.6,4.4,4.8],
+  },
+  bar: {
+    all:          { 2023:[6,4,5,3,1], 2024:[4,3,3,2,1] },
+    'Conducción': { 2023:[6,0,0,0,0], 2024:[4,0,0,0,0] },
+    'Bodega':     { 2023:[0,4,0,0,0], 2024:[0,3,0,0,0] },
+    'Mantención': { 2023:[0,0,5,0,0], 2024:[0,0,3,0,0] },
+    'Carga/Desc.':{ 2023:[0,0,0,3,0], 2024:[0,0,0,2,0] },
+    'Administrativo':{ 2023:[0,0,0,0,1], 2024:[0,0,0,0,1] },
+  },
+  kpi: {
+    all:   { tf:'4.8', tg:'82', dp:'164', dsa:'127', dtf:'↓ 18% vs 2023', dtg:'↓ 24% vs 2023', ddp:'↓ 31 días vs 2023', ddsa:'↑ Récord anual' },
+    2022:  { tf:'8.6', tg:'138', dp:'261', dsa:'42', dtf:'Año base', dtg:'Año base', ddp:'Año base', ddsa:'' },
+    2023:  { tf:'5.8', tg:'108', dp:'195', dsa:'87', dtf:'↓ 33% vs 2022', dtg:'↓ 22% vs 2022', ddp:'↓ 26% vs 2022', ddsa:'' },
+    2024:  { tf:'4.8', tg:'82', dp:'164', dsa:'127', dtf:'↓ 18% vs 2023', dtg:'↓ 24% vs 2023', ddp:'↓ 31 días vs 2023', ddsa:'↑ Récord anual' },
+  }
+};
+
 // Line chart
-new C(document.getElementById('lineChart'), {
+const lineChart = new C(document.getElementById('lineChart'), {
   type:'line',
   data:{
-    labels:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+    labels: DATA.line.labels,
     datasets:[
-      { label:'TF 2022', data:[9.2,8.7,8.1,9.5,7.8,8.3,9.0,8.6,7.9,8.2,7.5,7.1], borderColor:'rgba(139,155,176,0.5)', borderDash:[4,4], borderWidth:1.5, pointRadius:0, tension:0.4 },
-      { label:'TF 2023', data:[7.0,6.8,6.2,7.1,5.9,6.4,6.8,6.1,5.8,5.5,5.9,5.8], borderColor:'rgba(232,168,56,0.7)', borderWidth:2, pointRadius:3, pointBackgroundColor:'rgba(232,168,56,0.7)', tension:0.4, fill:false },
-      { label:'TF 2024', data:[5.5,5.1,4.8,5.2,4.3,4.7,4.5,4.2,4.9,4.6,4.4,4.8], borderColor:'#2EB8D4', borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#2EB8D4', tension:0.4, fill:true, backgroundColor:'rgba(46,184,212,0.08)' },
+      { label:'TF 2022', data:DATA.line[2022], borderColor:'rgba(139,155,176,0.5)', borderDash:[4,4], borderWidth:1.5, pointRadius:0, tension:0.4 },
+      { label:'TF 2023', data:DATA.line[2023], borderColor:'rgba(232,168,56,0.7)', borderWidth:2, pointRadius:3, pointBackgroundColor:'rgba(232,168,56,0.7)', tension:0.4, fill:false },
+      { label:'TF 2024', data:DATA.line[2024], borderColor:'#2EB8D4', borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#2EB8D4', tension:0.4, fill:true, backgroundColor:'rgba(46,184,212,0.08)' },
     ]
   },
   options:{
-    responsive:true, plugins:{ legend:{ labels:{ color:'#8A9BB0', font:{family:'DM Sans',size:11}, boxWidth:14 } } },
+    responsive:true, animation:{duration:600},
+    plugins:{
+      legend:{labels:{color:'#8A9BB0', font:{family:'DM Sans',size:11}, boxWidth:14}},
+      tooltip:{backgroundColor:'rgba(13,27,42,0.95)',borderColor:'rgba(46,184,212,0.3)',borderWidth:1,titleColor:'#fff',bodyColor:'#8A9BB0',padding:10}
+    },
     scales:{ x:{ grid, ticks:tick }, y:{ grid, ticks:tick, title:{ display:true, text:'Índice TF', color:'#8A9BB0', font:{size:11} } } }
   }
 });
 
 // Donut
-new C(document.getElementById('donutChart'), {
+const donutChart = new C(document.getElementById('donutChart'), {
   type:'doughnut',
   data:{
     labels:['Sobreesfuerzo','Golpes','Caídas','Colisiones','Otros'],
     datasets:[{ data:[34,22,18,16,10], backgroundColor:['#2EB8D4','#E8A838','#3DBA7C','#E84455','rgba(255,255,255,0.15)'], borderWidth:0, hoverOffset:8 }]
   },
   options:{
-    responsive:true, cutout:'68%',
-    plugins:{ legend:{ position:'right', labels:{ color:'#8A9BB0', font:{family:'DM Sans',size:11}, boxWidth:12, padding:12 } } }
+    responsive:true, cutout:'68%', animation:{duration:600},
+    plugins:{
+      legend:{position:'right', labels:{color:'#8A9BB0', font:{family:'DM Sans',size:11}, boxWidth:12, padding:12}},
+      tooltip:{backgroundColor:'rgba(13,27,42,0.95)',borderColor:'rgba(46,184,212,0.3)',borderWidth:1}
+    }
   }
 });
 
 // Bar
-new C(document.getElementById('barChart'), {
+const barChart = new C(document.getElementById('barChart'), {
   type:'bar',
   data:{
     labels:['Conducción','Bodega','Mantención','Carga/Desc.','Administrativo'],
@@ -184,8 +285,127 @@ new C(document.getElementById('barChart'), {
     ]
   },
   options:{
-    responsive:true, plugins:{ legend:{ labels:{ color:'#8A9BB0', font:{family:'DM Sans',size:11}, boxWidth:14 } } },
+    responsive:true, animation:{duration:600},
+    plugins:{
+      legend:{labels:{color:'#8A9BB0', font:{family:'DM Sans',size:11}, boxWidth:14}},
+      tooltip:{backgroundColor:'rgba(13,27,42,0.95)',borderColor:'rgba(46,184,212,0.3)',borderWidth:1}
+    },
     scales:{ x:{ grid, ticks:tick }, y:{ grid, ticks:tick, beginAtZero:true } }
+  }
+});
+
+// === FILTER LOGIC ===
+let activeYear = 'all';
+let activeArea = 'all';
+
+function updateKPIs(year) {
+  const d = DATA.kpi[year] || DATA.kpi.all;
+  document.querySelectorAll('.kpi-val')[0].textContent = d.tf;
+  document.querySelectorAll('.kpi-val')[1].textContent = d.tg;
+  document.querySelectorAll('.kpi-val')[2].textContent = d.dp;
+  document.querySelectorAll('.kpi-val')[3].textContent = d.dsa;
+  document.querySelectorAll('.kpi-delta')[0].textContent = d.dtf;
+  document.querySelectorAll('.kpi-delta')[1].textContent = d.dtg;
+  document.querySelectorAll('.kpi-delta')[2].textContent = d.ddp;
+  document.querySelectorAll('.kpi-delta')[3].textContent = d.ddsa;
+}
+
+function updateLineChart(year, area) {
+  const src = (area && area !== 'all') ? DATA.line[area] : DATA.line.all;
+  const ds = lineChart.data.datasets;
+  if (year === 'all') {
+    ds[0].data = src[2022]; ds[0].hidden = false;
+    ds[1].data = src[2023]; ds[1].hidden = false;
+    ds[2].data = src[2024]; ds[2].hidden = false;
+  } else {
+    ds[0].data = src[2022]; ds[0].hidden = (year !== '2022');
+    ds[1].data = src[2023]; ds[1].hidden = (year !== '2023');
+    ds[2].data = src[2024]; ds[2].hidden = (year !== '2024');
+  }
+  lineChart.update();
+}
+
+function updateBarChart(area) {
+  const allLabels = ['Conducción','Bodega','Mantención','Carga/Desc.','Administrativo'];
+  if (area === 'all') {
+    barChart.data.labels = allLabels;
+    barChart.data.datasets[0].data = DATA.bar.all[2023];
+    barChart.data.datasets[1].data = DATA.bar.all[2024];
+  } else {
+    const idx = allLabels.indexOf(area);
+    const d = DATA.bar[area] || DATA.bar.all;
+    barChart.data.labels = [area];
+    barChart.data.datasets[0].data = [d[2023][idx]];
+    barChart.data.datasets[1].data = [d[2024][idx]];
+  }
+  barChart.update();
+}
+
+document.getElementById('yearFilter').addEventListener('click', e => {
+  const btn = e.target.closest('.fbtn');
+  if (!btn) return;
+  document.querySelectorAll('#yearFilter .fbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeYear = btn.dataset.year;
+  updateKPIs(activeYear);
+  updateLineChart(activeYear, activeArea);
+  updateBarChart(activeArea);
+  // Re-apply active area filter to table after year change
+  document.querySelectorAll('tbody tr').forEach(tr => {
+    if (activeArea === 'all') { tr.style.display = ''; return; }
+    const areaCell = tr.cells[1]?.textContent?.trim() || '';
+    const areaKey = activeArea === 'Administrativo' ? 'Adm.' : activeArea;
+    tr.style.display = areaCell.includes(areaKey) ? '' : 'none';
+  });
+});
+
+document.getElementById('areaFilter').addEventListener('click', e => {
+  const btn = e.target.closest('.fbtn');
+  if (!btn) return;
+  document.querySelectorAll('#areaFilter .fbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeArea = btn.dataset.area;
+  updateBarChart(activeArea);
+  updateLineChart(activeYear, activeArea);
+  // Also filter table rows by area
+  document.querySelectorAll('tbody tr').forEach(tr => {
+    if (activeArea === 'all') { tr.style.display = ''; return; }
+    const areaCell = tr.cells[1]?.textContent?.trim() || '';
+    // Normalize 'Administrativo' button label to match 'Adm.' in table
+    const areaKey = activeArea === 'Administrativo' ? 'Adm.' : activeArea;
+    tr.style.display = areaCell.includes(areaKey) ? '' : 'none';
+  });
+});
+
+// === EXPORT PNG ===
+document.getElementById('exportBtn').addEventListener('click', () => {
+  // Combine all charts into one canvas
+  const charts = [lineChart, donutChart, barChart];
+  const link = document.createElement('a');
+  link.download = 'dashboard-accidentabilidad.png';
+  // Export the main line chart as proxy
+  link.href = lineChart.toBase64Image();
+  link.click();
+});
+
+// === KPI COUNTER ANIMATION ===
+function animNum(el, target, decimals=0, duration=1200) {
+  const start = performance.now();
+  const orig = parseFloat(target);
+  function up(now) {
+    const p = Math.min((now-start)/duration,1);
+    const e = 1-Math.pow(1-p,3);
+    el.textContent = (e*orig).toFixed(decimals);
+    if(p<1) requestAnimationFrame(up);
+    else el.textContent = target;
+  }
+  requestAnimationFrame(up);
+}
+window.addEventListener('load', () => {
+  // Only animate if no year filter has been applied yet (activeYear is still 'all')
+  if (activeYear === 'all') {
+    const kpiVals = document.querySelectorAll('.kpi-val');
+    [[kpiVals[0],'4.8',1],[kpiVals[1],'82',0],[kpiVals[2],'164',0],[kpiVals[3],'127',0]].forEach(([el,v,d])=>animNum(el,v,d));
   }
 });
 </script>
